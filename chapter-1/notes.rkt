@@ -173,4 +173,66 @@ x
 
 ; 1.1.4 Compound Procedures ##
 
+#| any powerful programming language will include the following elements
+  - numbers and arithmetic operations are primitive data and procedures
+  - nesting of combinations provides a mean of combining operations
+  - definitions that associate names with values provide a limited means of abstraction
+|#
+
+; there exists a much more powerful abstraction technique... procedure definitions, by which a compound operation can be named and referred to as a unit.
+; is this like assigning a function to a variable, and calling that function by referencing that variable? keep going, we'll see.
+
+; think about the idea of squaring. to square something is to multiply it by itself.
+(define (square x) (* x x))
+
+;(define (square     x)         (*          x       x))
+; to      square     something,  multiply   it   by itself
+
+; the above is called a compound procedure, given the name square.
+; the procedure represents the operation of multiplying something by itself.
+; x, the thing to be multiplied, is given a local name. it does not have meaning outside the definition of square
+; evaluating the above definition creates the compound procedure and associates it with the name square.
+
+; general form of procedure definition:
+; (define (<name> <formal parameters>) <body>)
+
+; name: the symbol to be associated with the procedure definition in the env
+; formal parameters: names used within the body of the procedure to refer to the corresponding arguments of the procedure.
+; body: the expression that will yield the value of the procedure when it is applied with actual arguments
+
+; now that square is defined, it can be used
+(square 5) ;25
+
+; ... and combined with other expressions
+(square (+ 2 5)) ;49
+
+; ... which can be more invocations of square
+(square (square 3)) ;81
+
+; can use square to build other procedures as well
+; x^2 + y^2
+(+ (square x) (square y)) ;(square y) is undefined, so this won't evaluate...
+
+; but it can be used to build a new compound procedure and associate that with another name using define
+(define (sum-of-squares x y)
+  (+ (square x) (square y)))
+
+; now we have a compound procedure called sum-of-squares taking 2 arguments, locally called x and y
+; the body of the procedure is the addition of the square of the value of argument x and the square of the argument y
+
+(sum-of-squares 3 4)
+
+(sum-of-squares (+ 2 3) (* 2 5))
+
+; sum-of-squares likewise can be used as a building block for further procedures...
+(define (f a)
+  (sum-of-squares (+ a 1) (* a 2)))
+
+(f 5)
+
+; there is no difference in how compound and primitive procedures are used. just by looking at them one can't tell if compound procedures are built into the interpreter like the primitives or not
+
+
+; 1.1.5 The Substitution Model for Procedure Application ##
+
 
