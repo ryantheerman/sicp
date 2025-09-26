@@ -211,7 +211,7 @@ x
 
 ; can use square to build other procedures as well
 ; x^2 + y^2
-(+ (square x) (square y)) ;(square y) is undefined, so this won't evaluate...
+(+ (square x) (square y)) ;this won't evaluate, but can be used in a new definition.
 
 ; but it can be used to build a new compound procedure and associate that with another name using define
 (define (sum-of-squares x y)
