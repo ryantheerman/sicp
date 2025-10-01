@@ -235,4 +235,174 @@ x
 
 ; 1.1.5 The Substitution Model for Procedure Application ##
 
+; refresher...
+; things like + - * / are primitive procedures (maybe there are more, but those are the ones I'm aware of at the moment)
+; while things like square, sum-of-squares, and f mentioned above are compound procedures
+; well, to be exact, those symbols above are the *names* representing the primitive and compound procedures. the procedure itself is what is denoted by the body of the compound procedure definition.
+; the point is that the interpreter follows much the same process for evaluating a compound procedure as it does a primitive.
+; namely "the interpreter evaluates the elements of the combination and applies the procedure (which is the value of the operator of the combination) to the arguments (which are the values of the operands of the combination)"
 
+; the interpreter rule for evaluating a compound procedure:
+; "to apply a compound procedure to arguments, evaluate the body of the procedure with each formal parameter replaced by the corresponding argument"
+
+; consider (f 5) from the prior section
+; f is the name of the compound operation, 5 is formal argument, and (sum-of-squares (+ a 1) (* a 2)) is the body
+
+; so to evaluate (f 5), we first retrieve the body (sum-of-squares (+ a 1) (* a 2))
+
+; then we replace the formal param(s) 'a' with the actual argument '5', giving us (sum-of-squares (+ 5 1) (* 5 2))
+
+; now (f 5) has resolved to (sum-of-squares (+ 5 1) (* 5 2)), leaving us with 3 subexpressions to evaluate
+; 1. we must evaluate sum-of-squares to know which operation to apply to the arguments (+ 5 1) and (* 5 2)
+; 2. we must evaluate (+ 5 1) to 6
+; 3. we must evaluate (* 5 2) to 10
+
+; now we know that we need to apply sum-of-squares to 6 and 10
+; (sum-of-squares x y) takes x and y as formal arguments, and applies them to the combination (+ (square x) (square y))
+; so our problem is now (sum-of-squares 6 10), which resolves to (+ (square 6) (square 10))
+
+; the definition of (square x) resolves the above expression to (+ (* 6 6) (* 10 10))...
+; which resolves by multiplication to (+ 36 100)...
+; which resolves finally 136
+
+; the process of evaluating describe above is called the *substitution model*
+; we can use this as a model of the "meaning" of procedure application.
+; NOTE: the substitution model helps us think about procedure application, but it is not a literal description of how the interpreter really works. typically the interpreter uses the local environment for formal parameters, rather than literally substituting the text of the operand with the text of the operands' value, or what it resolves to.
+; NOTE: the substitution model is a simplified way of thinking about procedure application that will break down when things get more complex, but it's a good starting point to start thinking about the process.
+
+; the substitution model can be evaluated a different way.
+; rather than substituting and evaluating at every step like in the example above, we could substitute and *wait* to expand until the end.
+
+; method 1, how we evaluated above:
+(f 5)
+(sum-of-squares (+ 5 1) (* 5 2))
+(sum-of-squares 6 10)
+(+ (square 6) (square 10))
+(+ (* 6 6) (* 10 10))
+(+ 36 100)
+136
+
+; method 2, another way to evaluate:
+(f 5)
+(sum-of-squares (+ 5 1) (* 5 2))
+(+ (square (+ 5 1)) (square (+ 5 2)))
+(+ (* (+ 5 1) (+ 5 1)) (* (* 5 2) (* 5 2))) ; NOTE: (+ 5 1) and (* 5 2) are each performed twice here, rather than once each like above.
+; which reduces to
+(+ (* 6 6) (* 10 10))
+(+ 36 100)
+136
+; same answer, different order of evaluation
+; the second way we are not evaluating the operands until they are needed, whereas in the first way we were evaluating the operands first
+; both approaches result in reducing to primitives that can be resolved by the in-built rules in the interpreter.
+
+; method 2 ("fully expand and then reduce") is called *normal-order evaluation* as opposed to method 1 which the interpreter actually uses ("evaluate the arguments and then apply"), called *applicative-order evaluation*.
+
+; substitution model refresher...
+; normal-order evaluation: fully expand and then reduce
+; applicative-order evaluation: evaluate the arguments and then apply (actually used by the interpreter)
+; but remember, the interpreter doesn't literally substitute string expressions for names. rather it uses the local environment (in a way that has not yet been defined).
+
+; for most problems and examples in the first two chapters of the book, normal-order and applicative-order evaluations will yield the same result.
+
+; Lisp uses applicative-order
+; it is more efficient (don't need to evaluate identical expressions multiple times)
+; but also, normal-order evaluation (fully expand then reduce) becomes complicated when the substitution model no longer applies
+; normal order eval can still be valuable though, even if it's not universally applicable.
+
+
+; 1.1.6 Conditional Expressions and Predicates ##
+
+; so far what we've gone over is not super powerful. we can do some math, and we can define some procedures, but we have can't do conditional logic.
+; Lisp can do conditional though, of course
+; say we want to compute absolute zero by testing if a number is positive, negative, or zero
+
+#|
+     /  x  if x > 0
+|x| <   0  if x = 0
+     \ -x  if x < 0
+|#
+
+; the above *case analysis* can be expressed with with Lisp special form **cond**, meaning "conditional"
+; remember, the special forms are expressions in Lisp that are not evaluated in the same way as the primitive or compound expressions
+
+(define (abs x)
+  (cond ((> x 0) x)
+        ((= x 0) x)
+        ((< x 0) (- x))))
+
+(abs 10)
+(abs 0)
+(abs -10)
+
+#| the general form of the conditional expression is as follows
+
+(cond (<p1> <e1>)
+      (<p2> <e2>)
+      .
+      .
+      .
+      (<pn> <en>))
+|#
+
+;the symbol cond is followed by parenthesized pairs of expressions (<p> <e>) called *clauses*.
+;the first expression in each pair is a *predicate*, an expression whose value is interpreted as either true or false.
+;NOTE: Scheme has two distinguished values denoted by constants #t and #f. when the interpreter checks a predicate's value, it interprets #f as false.
+; so a predicate is like a boolean? not exactly. a predicate has a boolean value. it can be true or false.
+
+; conditional expressions are evaluated as follows:
+; predicate <p1> is evaluated. if its value is false, <p2> is evaluated. if <p2> evaluates to false, <p3> is evaluated.
+; this goes on until a predicate evaluates to true, at which point the interpreter returns the value of <e>, the corresponding *consequent expression* of the clause, as the value of the conditional expression.
+; if none of the <p>s evaluate to true, the value of the cond is undefined.
+
+; okay, so let me reword all this to make sure i've got it
+; to do anything useful with a language we need to be capable of evaluating conditionally
+; this lets us takes different paths through the code based on the outcome of evaluating those conditions
+; in Lisp, to specify a conditional expression we use the special form "cond" followed by parenthetical clauses consisting of a predicate, which can evaluate to true or false, and a consequent expression, which is returned as the value of the conditional if the associated predicate evaluates to true.
+; conditionals are evaluated like so... each predicate is evaluated until one evaluates to true. if none evaluate to true, the conditional is undefined.
+; that all makes sense, moving on
+
+; *predicate* is used both for procedures that return true or false and for expressions that evaluate to true or false.
+; for example, the primitive predicates >, <, =, which take two numbers and test whether the first is greater than, less than, or equal to the second.
+
+; could define the absolute value conditional more simply
+(define (abs x)
+  (cond ((< x 0) (- x))
+        (else x)))
+
+(abs 10)
+
+; if x is less than zero, return -x; otherwise return x
+; this makes sense. if the value is 0 or greater, the value does not need to be transformed to be positive. but if the value is negative, the return the negation of that value.
+; the else symbol above is a special that can be used in place of the final predicate in the final clause of a conditional.
+; if all other predicates in the conditional evaluate to false, the else clause will be returned by default.
+; any expression that always evaluates to true can be used as the final predicate, like so...
+
+(define (abs x)
+  (if (< x 0)
+      (- x)
+      x))
+
+(abs 15)
+(abs 0)
+(abs -35)
+
+; this uses the if special form
+; the if form can be used when there are exactly 2 cases in the case analysis
+; the general form of an if expression is
+; (if <predicate> <consequent> <alternative>)
+
+; the interpreter evaluates the predicate. if the predicate evaluates to true, the interpreter evaluates the consequent and returns its value. otherwise the interpreter evaluates the alternative and returns its value.
+; it's like a ternary in java.
+
+; so many of these constructs are the same as what i find in java, which is obvious. like duh man.
+; but it's cool to see the fundamentals of programming so cleanly laid out
+; languages need conditional evaluation. and the logic is the same across languages. it doesn't necessarily matter which language is being used, or how it internally handles the evaluations, but >, <, = *mean* the same thing and the numbers being compared are compared the same way.
+
+#|
+in addition to the primitive predicates >, <, and =, there are logical composition operations which enable us to construct compound predicates
+  - (and <e1> ... <en>): interpreter evaluates expressions <e> one at a time. if any <e> evaluates to false, the value of the and expression is false and the rest of the <e>s are not evaluated. if all <e>s evaluate to true, the value of the and expression is the value of the last expression.
+  - (or <e1> ... <en>): each <e> is evaluated one at a time, left to right. if any <e> evaluates to a true, that value is returned as the value of the or expression and the rest of the <e>s are skipped.
+  - (not <e>): TODO: finish these notes
+|#
+
+; TODO: go over this section again when you're not so exhausted. i'm getting this, but my brain is sludge after several long days. need to review this with more focus and attention.
