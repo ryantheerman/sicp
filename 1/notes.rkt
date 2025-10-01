@@ -33,9 +33,6 @@ Some notes on my setup for working through SICP...
 
 ; increment is the only thing i know so far, okay?
 
-; will be focusing more on the exercises than the note taking. at least this time around. don't want to get bogged down trying to record every detail, but i will take note of interesting/important concepts.
-
-
 ; opening note: this is the study of computational process.
 ; computational processes are abstract things that live in computers, which manipulate other abstract things called data.
 ; the process is directed by a pattern of rules called a program.
@@ -405,4 +402,62 @@ in addition to the primitive predicates >, <, and =, there are logical compositi
   - (not <e>): TODO: finish these notes
 |#
 
-; TODO: go over this section again when you're not so exhausted. i'm getting this, but my brain is sludge after several long days. need to review this with more focus and attention.
+; TODO: go over this section again when you're not so exhausted. i'm getting this, but my brain is sludge after several long days. need to review this with more focus and attention. this felt like just copying down what the book says rather than attempting to integrate it into my understanding.
+
+; 2nd pass ##
+
+; to be usefua, a programming language needs to be able to proceed along differing paths based on the outcomes of evaluating conditions.
+; Lisp accomplishes this with the *cond* special form
+(define (abs x)
+  (cond ((> x 0) x)
+        ((= x 0) 0)
+        ((< x 0) (- x))))
+
+(abs 10)
+(abs 0)
+(abs -10)
+
+#| the general form of the conditional expression is as follows
+(cond (<p1> <e1>)
+      (<p2> <e2>)
+      .
+      .
+      .
+      (<pn> <en>))
+|#
+
+; the keyword cond indicates this is a conditional
+; followed by some number of parenthetical pairs called clauses
+; <p> refers to a predicate (something that can evaluate to true or false)
+; <e> refers to the consequent expression _if_ that clauses' predicate evaluates to true
+; the interpreter evaluates predicates from top to bottom. when one evaluates to true, its consequent expression is returned as the value of the cond.
+; if no predicates evaluate to true, the cond is undefined.
+
+; NOTE: the word predicate is used both for procedures that return true or false and for expressions that evaluate to true or false.
+; what does this mean exactly? the difference is in the wording... "... procedures that return ..." "... expressions that evaluate ..."
+; so if the value that is returned by some process is true of false, that process is a predicate
+; and if an expression boils down to true of false, that is also a predicate
+; but how do those differ?
+; something like (< x 0) uses the primitive predicate <, which takes 2 numbers and returns true if the first is less than the second, or returns false otherwise.
+; oh oh oh i see...
+; so the primitive predicates < or > or = are predicate **procedures**...
+; and using them in an expression results in a primitive **expression**.
+
+; predicate procedures:
+; even?
+; odd?
+; >
+
+; predicate expressions:
+; (even? 4)
+; (odd? 2)
+; (> 2 5)
+
+(even? 4) ; returns #t
+
+(odd? 2) ; returns #f
+
+(> 2 5) ; returns #f
+
+; drilling down into the primitives, or into what must be compound procedures like even and odd... those are procedures that are built from expressions. are those expressions predicates? 
+; gotta go to work. will pick this up later.
