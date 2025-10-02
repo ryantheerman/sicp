@@ -116,3 +116,60 @@
 (a-plus-abs-b 1 -1) ; 2
 (a-plus-abs-b 1 -4) ; 5
 (a-plus-abs-b 1 -1004) ; 1005
+
+
+; Exercise 1.5 ##
+; Ben Bitdiddle has invented a test to determine whether the interpreter he is faced with is using applicative-order evaluation or normal-order evaluation. He defines the following two procedures:
+
+(define (p) (p))
+
+(define (test x y)
+  (if (= x 0)
+      0
+      y))
+
+; Then he evaluates the expression
+
+(test 0 (p))
+
+; What behavior will Ben observe with an interpreter that uses applicative-order evaluation? What behavior will he observe with an interpreter that uses normal-order evaluation? Explain your answer. (Assume that the evaluation rule for the special form *if* is the same whether the interpreter is using normal or applicative order: The predicate expression is evaluated first, and the result determines whether to evaluate the consequent or alternative expression.)
+
+; refresher...
+; normal-order evaluation is the "fully expand and then reduce" method
+; applicative-order evaluation is the "evaluate the arguments and then apply" method
+
+; if the interpreter for Ben's test uses normal-order evaluation, it will fully expand and then reduce all expressions
+; so it will see the operator "test" and the operands "0" and "(p)"
+; test is defined as (if (= x 0) 0 y)
+; (p) is defined as itself
+; so in normal-order evaluation, (test 0 (p)) will expand "test" into (if (= 0 0) 0 (p)) <- this is substituting the conditional for test, and substituting the actual arguments for the formal arguments.
+; because (p) is defined as itself, it cannot be substituted with anything meaningful.
+; i expect we'll see some kind of interpreter error saying that (p) is undefined
+
+; if the interpreter uses applicative-order evaluation, it will evaluate the arguments and then apply
+; so it will substitute the operand "test" with the conditional (if (= x 0) 0 y)
+; then it will substitute the formal arguments with the actual arguments, leaving us with (if (= 0 0) 0 (p))
+; then it will apply the operation on (test 0 (p))
+; because x = 0, the if conditional predicate evaluates to true, so 0 is returned for the test operation.
+; if x did not equal 0, the predicate would be false and the interpreter would attempt to evaluate (p), which is defined in as itself, so is ultimately undefined. probably we'd see some type of interpreter error.
+; let's test it.
+
+; hmmm okay, seem like the operation hangs when i run (test 0 (p)).
+; why might it hang?
+; because we're using applicative-order eval and cannot substitute anything for (p)?
+
+; wow i got that one totally wrong.
+
+; i needed to think about how the interpreter rules are applied more in normal vs applicative order eval.
+; yes it's true that in normal-order eval, the subexpressions are fully expanded as early as possible, but the key is that those expanded subexpressions are not _evaluated_ until they are needed.
+; in the case of (test 0 (p)), yes (p) is defined as itself (the function p), but because x = 0, only the first consequent expression is evaluated, returning 0. the alternative consequent does not need to be evaluated, so we skip past the infinite loop that an applicative-order eval interpreter gets stuck in.
+
+; why does an applicative-order eval interpreter get stuck in an infinite loop?
+; the rules of evaluating a combination...
+; (test 0 (p)) will start with the operand, and evaluate the operator to (if (= x 0) 0 y)
+; then it will evaluate the 0 as 0
+; then it will evaluate (p)
+; (p) is defined as the function (p), so the interpreter will attempt to apply the rules of interpretation to this expression
+; it will start with the operator, and evaluate (p) as (p)
+; then it will attempt to apply the procedure denoted by the operator to the operands. the operator is (p) and there are no operands.
+; to apply a compound procedure, the operation must be applied to the arguments of the procedure, but there are no arguments, so in order to attempt applying the compound procedure, the interpreter must again follow the rules and evaluate the operator then the operands. it will evaluate (p) to (p) and start the loop again.
