@@ -459,5 +459,79 @@ in addition to the primitive predicates >, <, and =, there are logical compositi
 
 (> 2 5) ; returns #f
 
-; drilling down into the primitives, or into what must be compound procedures like even and odd... those are procedures that are built from expressions. are those expressions predicates? 
 ; gotta go to work. will pick this up later.
+
+; are the predicate procedures actually predicate expressions abstracted away behind the name?
+; how would we define a procedure like even?
+; something like...
+(define (even? x)
+  ((if x % 2 == 0) (#t) (#f)))
+
+; i don't know the Lisp for modulo, but something like this could work.
+; even? is likely a conditional checking if the input value modulo 2 is equal to 0. if yes, return true. else return false.
+; not sure where this falls in the structure of the language. define is a special form, not interpreted according to the rules used for other expressions. cond is also a special form. so is if. moving on. will revisit this question i'm sure in time.
+; the special form if expression is returning the value #t or #f based on the if conditional, and that if conditional is being associated with the name even via the define special form. so the predicate procedure even is actually a predicate expression if it's unpacked from its abstraction.
+; moving on
+
+; can define the absolute value function more simply than the example above
+(define (abs x)
+  cond ((< x 0) (- x)
+        (else x)))
+
+; else is a special symbol that can be used in place of a predicate expression in the final clause. rather than 'else', any predicate expression that always evaluates to true could be used in its place. else just signifies that if all other predicates are false, return the consequent expression of the else clause.
+; the above in plain english: if x is less than 0, return the negation of x. otherwise return x.
+
+; another way to define the absolute value function is...
+(define (abs x)
+  (if (< x 0)
+      (- x)
+      x))
+
+; if is another special form, a type of conditional (not a type of *cond*).
+; the interpreter first evaluates the predicate. if it evaluates to true, the first consequent expression is returned. if it evaluates to false, the alternative consequent expression is returned.
+; cond can represent any number of cases in a case analysis with multiple clauses
+; if can only represent two cases in a case analysis.
+; sort of like a ternary in java
+; one key difference of note between cond and if conditionals...
+; the consequent expression of a cond clause can be a sequence of expressions, which once evaluated return the final value as the value of the cond
+; but if consequent expressions must be single expressions
+
+; beyond primitive predicates like >, <, and =, we have _logical composition operations_ in Lisp.
+; we can use these to construct compound predicates
+; think boolean gates...
+
+; and <e1> ... <en>:
+; all expressions are evaluated by the interpreter, one at a time, left to right. if all evaluate to true, the compound predicate evaluates to true. if any evaluate to false, the compound predicate evaluates to false.
+
+; or <e1> ... <en>
+; the expressions are evaluated by the interpreter, one at a time, left to right. if any evaluate to true, the compound predicate evaluates to true and the rest of the expressions are skipped. if all expressions evaluate to false, the value of the compound or expression is false.
+
+; not <e>
+; returns true when <e> evaluates to false, and false when <e> evaluates to true.
+
+; NOTE: 'and' and 'or' are special forms, not procedures, because the subexpressions are not all necessarily evaluated. 'not' however is an ordinary procedure.
+
+; some examples of compound predicates in action...
+
+(define (between-five-ten x)
+         (if (and (> x 5) (< x 10)) (= x x) (not (= x x))))
+(between-five-ten 2)
+(between-five-ten 6)
+(between-five-ten 5)
+(between-five-ten 10)
+(between-five-ten 9)
+
+
+(define (>= x y)
+  (or (> x y) (= x y)))
+(>= 3 4)
+(>= 3 3)
+(>= 3 2)
+
+; could also define the above as...
+
+(define (>= x y)
+  (not (< x y)))
+(>= 3 4)
+(>= 3 3)
+(>= 3 2)
