@@ -535,3 +535,8 @@ in addition to the primitive predicates >, <, and =, there are logical compositi
 (>= 3 4)
 (>= 3 3)
 (>= 3 2)
+
+
+; Review of Evaluation Rules and Normal vs Applicative Order Evaluation ##
+
+

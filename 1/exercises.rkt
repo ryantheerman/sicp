@@ -173,3 +173,5 @@
 ; it will start with the operator, and evaluate (p) as (p)
 ; then it will attempt to apply the procedure denoted by the operator to the operands. the operator is (p) and there are no operands.
 ; to apply a compound procedure, the operation must be applied to the arguments of the procedure, but there are no arguments, so in order to attempt applying the compound procedure, the interpreter must again follow the rules and evaluate the operator then the operands. it will evaluate (p) to (p) and start the loop again.
+
+; gotta review the above. go back to notes and pin it down.
