@@ -539,4 +539,118 @@ in addition to the primitive predicates >, <, and =, there are logical compositi
 
 ; Review of Evaluation Rules and Normal vs Applicative Order Evaluation ##
 
+; found this useful post about normal vs applicative order in the evaluation of lambda expressions (archived it for posterity):
+; https://web.archive.org/web/20251004114323/https://sookocheff.com/post/fp/evaluating-lambda-expressions/#normal-order-evaluation
 
+; first, some vocabulary
+
+; redex: a reducible function expression.
+; lambda expression in _normal form_: an expression that cannot be reduced any further. an expression that no longer contains any function applications, but has been reduced to primitives. a lambda expression that contains no redexes.
+
+; at least in the substitution model, there are 2 differing strategies for reducing a lambda expression to normal form:
+; normal-order evaluation...
+; and applicative-order evaluation.
+
+; the difference between normal and applicative order evaluation is the order in which the interpreter evaluates the subexpressions (functions) of the lambda expression. (i mean, obviously, but i'm being explicit to a fault here in order to pin down my understanding)
+
+; each strategy has its pros and cons.
+
+; in normal-order evaluation, we always evaluate the left-most outer-most redex first.
+; as we traverse the lambda we evaluate each function we find before evaluating that function's arguments.
+; the arguments are carried into the expansion of the outer-most function wholesale, and we don't evaluate them until we need them.
+; we are evaluating from the outside in
+
+; in applicative-order evaluation on the other hand, we evaluate a function's arguments before their function is applied.
+; internal reductions are applied first
+; the left-most redex is finally reduced after all its argument's redexes are reduced
+; we are evaluating from the inside out.
+
+; normal-order evaluation involves a performance hit. because we are evaluating subexpressions as we need them, we end up evaluating some subexpressions multiple times.
+
+; applicative order evaluation though runs the risk of getting caught in an infinite loop, or trying to evaluate impossible to evaluate functions.
+
+; some examples...
+
+; say we define two functions, double and average
+
+(define (double x) (+ x x)) ; adds x to itself
+(define (average x y) (/ (+ x y) 2)) ; adds x and y then divides the sum by 2
+
+; now say we want to evaluate the expression...
+(double (average 2 4))
+
+; normal-order eval will approach the problem like this...
+; 1. starting problem
+(double (average 2 4))
+; 2. evals the leftmost redex first. (double <arg>) becomes (+ <arg> <arg>). the arguments are not evaluated yet. they are passed in complete to the reduced outermost function.
+(+ (average 2 4) (average 2 4))
+; 3. evals the leftmost redex again- now (average 2 4). the second (average 2 4) argument is pending eval.
+(+ (/ (+ 2 4) 2) (average 2 4))
+; 4. evals the leftmost redex again
+(+ (/ 6 2) (average 2 4))
+; 5. and again. the first argument is now irreducible.
+(+ 3 (average 2 4))
+; 6. so we move on to the second argument, and eval the leftmost redex (average) into (/ (+ 2 4) 2). notice that we are evaluating the same function twice now
+(+ 3 (/ (+ 2 4) 2))
+; 7. continue reducing the leftmost redex
+(+ 3 (/ 6 2))
+; 8. until we have reached the normal form of the lambda expression (no redexes)
+(+ 3 3)
+; 9. which finally reduces to 6
+6
+
+; applicative-order eval will approach the problem like this...
+; 1. starting problem
+(double (average 2 4))
+; 2. we first evaluate the arguments. rather than reducing (double <arg>) into (+ <arg> <arg>), we leave the outermost redex for later evaluation and reduce the argument (average 2 4) to (/ (+ 2 4) 2)
+(double (/ (+ 2 4) 2))
+; 3. and we keep evaluating the innermost redex
+(double (/ 6 2))
+; 4. until the entire argument for the operation double has been evaluated to 3.
+(double 3)
+; 5. at this point we reduce our outermost redex. there is nothing left to reduce besides that.
+(+ 3 3)
+; 6. and finally we resolve to 6
+6
+
+; we can see in the step by step process that normal-order evaluation incurs a larger performance cost. we are making the same evaluations multiple times, because we are only evaluating a subexpression when we need it, not before.
+; with applicative-order evaluation, we don't incur this same performance cost, because we have evaluated the average function once before resolving the double function into its constituent arguments. by the time we need to evaluate (double <arg>), arg has already been evaluated to 3, so we stick that into the double functions arguments and reach 6 with less calculation than normal-order evaluation.
+
+; the performance improvement in applicative-order eval is preferred, but there is room for problems with applicative-order that we don't see with normal-order.
+
+; let's revisit exercise 1.5
+; two procedures (functions) are defined
+(define (p) (p))
+(define (test x y)
+  (if (= x 0)
+      0
+      y))
+
+; the first procedure (define (p) (p)) defines a procedure (p) as itself.
+; if (p) needs to be evaluated, we will do so using the rules of evaluation, which in normal-order evaluation state we must start by evaluating any redex operands, and in applicative-order evaluation state we must start by evaluating redex operators.
+
+; the second procedure (define (test x y) (if (= x 0) 0 y)) defines a procedure (test x y) as an if conditional.
+; if whatever value is supplied for formal argument x is equal to 0, return 0. else, return whatever value is supplied for formal argument y.
+
+; the lesson lies in trying to evaluate (test 0 (p))
+
+; remember, (p) is defined as (p).
+
+; in normal-order evaluation, we start evaluating the outermost redexes before the innermost
+; 1. so the starting problem...
+(test 0 (p))
+; 2. reduces to...
+(if (= 0 0) 0 (p))
+; 3. we continue evaluating the leftmost redex (= 0 0), which returns true. in an if conditional, if the predicate resolves to true, the first consequent expression is returned as the value of the procedure, in this case, 0.
+0
+
+; but in applicative-order evaluation, we take another path
+; 1. the starting problem is...
+(test 0 (p))
+; 2. and by applicative-order eval, we first need to evaluate the redex arguments (start inside work out). 0 needs no be reduced, so we go to evaluate (p), which is defined as (p), so it evaluates to (p)
+(test 0 (p))
+; 3. now we have the same problem we started with. and in applicative-order eval, we need to first evaluate the innermost redexes (the arguments, or the operands) before evaluating the outermost. so again we take (p) and evaluate it to (p)
+(test 0 (p))
+; 4. this will go on forever. we're in an infinite loop. the rules of applicative-order evaluation force us to evaluate the operands before the operators, and because the procedure (p) always evaluates to the procedure (p), we can never break out of this loop. we will continually evaluate (p) into (p).
+
+; this makes way more sense to me now after a more in depth review.
