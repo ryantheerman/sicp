@@ -24,8 +24,8 @@ Some notes on my setup for working through SICP...
 
 ; if there is not a blank line between the previous line and the currently selected line, my tslime shortcuts will send all lines above the current until a line break. this includes comments and other lisp commands
 ; it will also send lines below the current
-; so unless the line i want to sound is bounded top and bottom by blank lines, they'll get sent via tslime too.
-; not the end of the world.
+; so unless the line i want to send is bounded top and bottom by blank lines, they'll get sent via tslime too.
+; not the end of the world. actually preferable. this way i can send chunks of definitions and functions without having to select each line.
 
 (inc 20034)
 
@@ -162,7 +162,7 @@ circumference
 x
 ; does not apply the operator 'define' to the two arguments 'x' and '10'
 ; (define x 10) is not a combination. it is an association of the variable x with the value 10.
-; this exception (and others we haven't seen yet) to the general evaluation rule and is called a "special form".
+; this exception (and others we haven't seen yet) to the general evaluation rule is called a "special form".
 ; each special form has its own eval rule.
 ; the various possible expressions and their associated rules make up the syntax of the language.
 ; lisp syntax is quite simple... the general eval rules, together with a handful of specialized rules for special forms
@@ -647,10 +647,101 @@ in addition to the primitive predicates >, <, and =, there are logical compositi
 ; but in applicative-order evaluation, we take another path
 ; 1. the starting problem is...
 (test 0 (p))
-; 2. and by applicative-order eval, we first need to evaluate the redex arguments (start inside work out). 0 needs no be reduced, so we go to evaluate (p), which is defined as (p), so it evaluates to (p)
+; 2. and by applicative-order eval, we first need to evaluate the redex arguments (start inside work out). 0 needs not be reduced, so we go to evaluate (p), which is defined as (p), so it evaluates to (p)
 (test 0 (p))
 ; 3. now we have the same problem we started with. and in applicative-order eval, we need to first evaluate the innermost redexes (the arguments, or the operands) before evaluating the outermost. so again we take (p) and evaluate it to (p)
 (test 0 (p))
 ; 4. this will go on forever. we're in an infinite loop. the rules of applicative-order evaluation force us to evaluate the operands before the operators, and because the procedure (p) always evaluates to the procedure (p), we can never break out of this loop. we will continually evaluate (p) into (p).
 
 ; this makes way more sense to me now after a more in depth review.
+
+
+; 1.1.7 Example: Square Roots by Newton's Method ##
+
+; computer procedures and mathematical functions are similar in that they specify a value that is determined by one or more parameters.
+; they differ in that computer procedures must be _effective_.
+
+; consider the square root function:
+
+; rootx = y such that y >= 0 and y^2 = x
+
+; the above mathematical function defines for us what the square root of a number _is_, but in no way does it tell us how to actually _find_ the square root of a number. it is not a procedure.
+
+; we'll rephrase the square root function in pseudo lisp to more clearly that it does not define a procedure:
+
+(define (sqrt x)
+  (the y (and (>= y 0)
+              (= (square y) x))))
+
+; the above does not define a procedure. it specifies what conditions must be true for y to be the square root of x
+
+; the contrast between mathematical function vs computational procedure reflects the distinction between describing properties of things and describing how to do things.
+; it's the distinction between declarative knowledge and imperative knowledge.
+; math is more declarative (what is) descriptions, while computer science is more imperative (how to) descriptions
+
+; so this begs the question... how do we compute square roots?
+
+; we can use Newton's method of successive approximations.
+; this method states that whenever we have a guess y for the square root of value x, we can perform simple manipulation to get a better guess (closer to the actual square root) by averaging y with x/y.
+
+; consider approximating the square root of 2.
+; let's guess 1.
+
+; y + x/y (1 + 2/1) becomes 3. dividing it by 2 to get the average get us 1.5. closer to the actual than 1.
+
+; now we feed 1.5 into our approximater.
+
+; (1.5 + 2/1.5) / 2 = 1.4167. closer.
+
+; (1.4167 + 2/1.4167) / 2 = 1.4142. very close.
+
+; as we continue this same process, we arrive at better and better approximations of the square root of 2.
+
+; this is a strategy than can be defined as a computational process. we are not defining _what_ a square root is. we are defining _how_ we find one.
+
+; we start with the value for the radicand (the num under the square root symbol) and our guess
+; if the guess is good enough, we are done.
+; if the guess is not good enough, we repeat the process with an improved guess.
+
+; the full procedure looks like this:
+(define (sqrt-iter guess x)
+  (if (good-enough? guess x)
+      guess
+      (sqrt-iter (improve guess x)
+                 x)))
+
+; we need to define the improve procedure. an improved guess is obtained by average the original guess with the quotient of the radicand and the original guess
+(define (improve guess x)
+  (average guess (/ x guess)))
+
+; but we don't have an average procedure defined, so let's do that
+(define (average x y)
+  (/ (+ x y) 2))
+
+; so now we can make our guess in for the square root of x, and improve the guess if it is not good enough. but what do we mean by good enough? how do we determine if a guess is good enough or needs to be improved?
+; we'll define good enough as when the square of the guess differs from the radicand by less than a tolerance of .001.
+(define (good-enough? guess x)
+  (< (abs (- (square guess) x)) 0.001))
+
+; NOTE: adding a question mark to the name of a predicate is a stylistic convention to help indicate it's a predicate (kinda like the convention in java to do with naming booleans isEnabled, isRed, isWorking, etc)
+
+; and lastly we need to define square for use in good-enough?
+(define (square x)
+  (* x x))
+
+; now we've defined a procedure for approximating square roots. let us define a procedure for triggering our approximater...
+(define (sqrt x)
+  (sqrt-iter 1.0 x))
+
+; this lets us pass in a value for which we'd like to approximate the square root, and it starts the guess at 1.0 by default.
+; NOTE: we specify 1.0 so the interpreter will work with and return decimal values rather than fractions. this is an artifact of MIT Scheme (and racket's SICP package too I guess). Other Lisps handle math with integers and decimals differently
+
+(sqrt 9)
+
+(sqrt (+ 100 37))
+
+(sqrt (+ 122 22))
+
+(sqrt (+ (sqrt 2) (sqrt 3)))
+
+(square (sqrt 1000))
