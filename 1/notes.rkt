@@ -697,7 +697,7 @@ in addition to the primitive predicates >, <, and =, there are logical compositi
 
 ; as we continue this same process, we arrive at better and better approximations of the square root of 2.
 
-; this is a strategy than can be defined as a computational process. we are not defining _what_ a square root is. we are defining _how_ we find one.
+; this is a strategy that can be defined as a computational process. we are not defining _what_ a square root is. we are defining _how_ we find one.
 
 ; we start with the value for the radicand (the num under the square root symbol) and our guess
 ; if the guess is good enough, we are done.
@@ -710,7 +710,7 @@ in addition to the primitive predicates >, <, and =, there are logical compositi
       (sqrt-iter (improve guess x)
                  x)))
 
-; we need to define the improve procedure. an improved guess is obtained by average the original guess with the quotient of the radicand and the original guess
+; we need to define the improve procedure. an improved guess is obtained by averaging the original guess with the quotient of the radicand and the original guess
 (define (improve guess x)
   (average guess (/ x guess)))
 
@@ -718,7 +718,7 @@ in addition to the primitive predicates >, <, and =, there are logical compositi
 (define (average x y)
   (/ (+ x y) 2))
 
-; so now we can make our guess in for the square root of x, and improve the guess if it is not good enough. but what do we mean by good enough? how do we determine if a guess is good enough or needs to be improved?
+; so now we can make our guess for the square root of x and improve the guess if it is not good enough. but what do we mean by good enough? how do we determine if a guess is good enough or needs to be improved?
 ; we'll define good enough as when the square of the guess differs from the radicand by less than a tolerance of .001.
 (define (good-enough? guess x)
   (< (abs (- (square guess) x)) 0.001))
@@ -745,3 +745,138 @@ in addition to the primitive predicates >, <, and =, there are logical compositi
 (sqrt (+ (sqrt 2) (sqrt 3)))
 
 (square (sqrt 1000))
+
+(sqrt 4)
+
+(sqrt 25)
+
+(sqrt .000001)
+
+(sqrt 1234567890123456789)
+
+
+; 1.1.8 Procedures as Black-Box Abstractions ##
+
+; sqrt is a process defined by a set of procedures
+; it is a _recursive_ process, meaning the procedure is defined in terms of itself.
+; we'll dig into this more in section 1.2
+
+; note also that sqrt breaks up into a number of subproblems
+;   - how to tell if a guess is good enough
+;   - how to improve a guess
+; the entire sqrt program can be viewed as a cluster of procedures that mirrors the decomposition of the problem into subproblems
+;   - sqrt triggers sqrt-iter
+;   - sqrt-iter is basically an if condition leveraging our procedure good-enough and improve. if the guess is good enough we return the guess. else we call sqrt-iter recursively but pass in a call to improve guess as our new guess.
+;   - good-enough leverages square and the built-in abs to square the guess, subtract it from x, take the absolute value of that output, and compare if it is with a tolerance of .001 of the original number we're guessing the square root of.
+;   - improve meanwhile takes the average our guess and x divided by our guess. when this is used as the new guess we more iteratively more closely approximate the square root.
+;   - we define square as a simple multiplication of the input by itself
+;   - and we define average as the sum of two inputs divided by two
+
+; with those pieces defined, we have everything we need to build the sqrt process to approximate square roots
+
+; the critical point about decomposing any program is not that it is being divided arbitrarily, but that it is being divided meaningfully.
+; each decomposed part is a procedure in itself which solves a specific problem
+; average, for example, can be used in our sqrt procedure
+; but it can also be used anywhere else.
+; once we define it, it's ours for use wherever we need it.
+; likewise when we define good-enough? in terms square, we can regard square as a **black box abstraction**.
+; we don't care how it functions. we don't need to care, and we don't need to know.
+; we could rip out the procedural abstraction of square that we're using and replace it with any other abstraction that delivers the same result, and our procedure would not change.
+
+(define (square x) (* x x))
+(define (square2 x) (exp (double (log x))))
+(define (double x) (+ x x))
+
+(square 5)
+(square2 5)
+
+; a user should not need to know how a procedure works in order to use it in their program.
+; local names within the procedure should also not matter to the user. if the functions params for square are x and x, or y and y, or input1 and input2, it does not matter to the user. they are simply passing in values when they implement the procedure.
+; for functions to be black box abstractions, they parameters used in them _must_ be local. a param in one function cannot unintentionally affect another.
+
+; again, it does not matter what name the formal parameter in a procedure has.
+; it is called a _bound variable_
+; the procedure _binds_ its formal parameters
+; if the variable is not bound, it is _free_
+; the set of expressions for which binding defines a name is called the _scope_ of that name
+; oh scope is what they're getting at. okay.
+; the definitions in this book are so careful and structured that sometimes i think they are describing something i've never heard of, but then it turns out to be scope, or control flow, or truth values.
+; i do admire and appreciate the language and rigor though.
+; scope i know. it's something like the territory in which a variable has meaning.
+; if a variable is defined in a class in java, it has meaning within instances of that class.
+; if a variable is defined in a method, it has meaning within that method
+; if a variable is defined in an if block of a method, it has meaning within that block (java at least).
+
+; let's write it out again to have sqrt so it's fresh in my mind:
+(define (sqrt x)
+  (sqrt-iter 1.0 x))
+(define (sqrt-iter guess x)
+  (if (good-enough? guess x)
+      guess
+      (sqrt-iter (improve guess x) x)))
+(define (good-enough? guess x)
+  (< (abs (- (square guess) x)) 0.001))
+(define (improve guess x)
+  (average guess (/ x guess)))
+(define (square x)
+  (* x x))
+(define (average x y)
+  (/ (+ x y) 2))
+
+(sqrt 25)
+(sqrt 100)
+
+; the problem with the above series of definitions is that if this were a much larger program being worked on my many developers, the procedures called 'improve' and 'good-enough' live at the top level of the scope, meaning if another developer wanted to write a function called 'improve' or 'good-enough' for use in their work, it would conflict with the one defined here. and maybe they need different behavior from their 'improve' and 'good-enough?' procedures. how to resolve?
+; the answer is to _localize_ the subprocedures. hide them inside the definition of sqrt so only the body of sqrt is their scope. that way the name is not reserved at the scope in which other developers might need to write their own implementations
+
+; we'll rewrite sqrt with it component procedures defined locally, thus not polluting any shared scope:
+
+
+(define (sqrt x)
+  (define (good-enough? guess x)
+    (< (abs (- (square guess) x)) 0.001))
+  (define (square x)
+    (* x x))
+  (define (average x y)
+    (/ (x + y) 2))
+  (define (improve guess x) (average guess (/ x guess)))
+  (define (sqrt-iter guess x)
+    (if (good-enough? guess x)
+        guess
+        (sqrt-iter (improve guess x) x)))
+  (sqrt-iter 1.0 x))
+
+(sqrt 25)
+
+; something isn't working here. the nested version is retuning an error when i try to run sqrt using its definitions.
+; need to dig in and find the bug
+; but right now i need to get ready for work, cause i also need to eat.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

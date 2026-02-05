@@ -175,3 +175,119 @@
 ; to apply a compound procedure, the operation must be applied to the arguments of the procedure, but there are no arguments, so in order to attempt applying the compound procedure, the interpreter must again follow the rules and evaluate the operator then the operands. it will evaluate (p) to (p) and start the loop again.
 
 ; gotta review the above. go back to notes and pin it down.
+
+
+; Exercise 1.6 ##
+; Alyssa P. Hacker doesn't see why *if* needs to be provided as a special form. "Why can't I just define it as an ordinary procedure in terms of *cond*?" she asks. Alyssa's friend Eva Lu Ator claims this can indeed be done, and defines a new version of *if*.
+
+(define (new-if predicate then-clause else-clause)
+  (cond (predicate then-clause)
+        (else else-clause)))
+
+; Eva demonstrates the program for Alyssa:
+
+(new-if (= 2 3) 0 5) ; returns 5
+
+(new-if (= 1 1) 0 5) ; returns 0
+
+; Delighted, Alyssa uses new-if to rewrite the square-root program:
+
+(define (sqrt-iter guess x)
+  (new-if (good-enough? guess x)
+          guess
+          (sqrt-iter (improve guess x)
+                     x)))
+
+; What happens when Alyssa attempts to use this to compute square roots? Explain.
+
+
+; okay, what will happen?
+; the structure of of the sqrt-iter procedure is the same, but the conditional has changed.
+; what was an if is now a cond.
+
+; refresher... what are the differences between if and cond?
+
+; cond:
+; specifies a series of <predicate> <consequent expression> pairs called clauses
+; each predicate is evaluated in order.
+; if a predicate evaluates to true, the value corresponding consequent expression is returned as the value for the cond.
+; the else clause is a special symbol that can be used in place of the predicate in the final clause of a cond.
+; _this causes the cond to return as its value the value of the corresponding consequent expression whenever all previous clauses have been bypassed_
+; is the verbiage there significant? when the else clause fires, does that short circuit the recursiveness of evaluating the final expression? dig into this? this might be the key to understanding the answer to this problem.
+
+; if:
+; if is a special form of conditional that can be used when there are precisely two cases in the case analysis.
+; an if contains a <predicate> followed by a <consequent expression> which is evaluated if the predicate evaluates to true, followed by an <alternative consequent expression> which is evaluated if the predicate evaluates to false.
+
+; the language of evaluated vs returned is why i'm suspicious of the else clause in cond.
+; do returned and evaluated mean the same thing in the context of MIT scheme, proxied for me by the racket SICP package?
+
+; think it through.
+; let's say returned _does_ short circuit recursive eval.
+; in that case, the new-if else clause would return (sqrt-iter (improve guess x) x)
+; it would return that procedure call with those arguments, rather than _evaluating_ the procedure call as would occur with the alternative consequent expression of an if.
+
+; the if will evaluate the alternative expression, which will trigger the interpreter rules on sqrt-iter again, recursively refining the guess until the consequent expression is evaluated. because it is a primitive decimal, it will be as itself. because no more evaluations are necessary, that decimal value will be returned as the value of the procedure being applied.
+
+; with the new-if, we won't recursively evaluate the consequent expression of the else clause. we'll just return that consequent expression.
+; so either it will return the literal expression, or it will produce an error because maybe you can't do that, or it will be undefined because an expression is not a value, and a value is expected.
+
+
+
+; define new-if
+(define (new-if predicate then-clause else-clause)
+  (cond (predicate then-clause)
+        (else else-clause)))
+
+; define sqrt-iter in terms of new-if
+(define (sqrt-iter guess x)
+  (new-if (good-enough? guess x)
+          guess
+          (sqrt-iter (improve guess x)
+                     x)))
+
+; define improve
+(define (improve guess x)
+  (average guess (/ x guess)))
+
+; define average
+(define (average x y)
+  (/ (+ x y) 2))
+
+; define good-enough?
+(define (good-enough? guess x)
+  (< (abs (- (square guess) x)) 0.001))
+
+; define square
+(define (square x)
+  (* x x))
+
+; define trigger operation
+(define (sqrt x)
+  (sqrt-iter 1.0 x))
+
+; execute
+(sqrt 16) ; the value _should_ approximate as close to 4. but i suspect we'll receive an error.
+
+; in fact we're hung.
+; why are we hung?
+
+; i am assuming we got into a loop. how did we get into a loop?
+
+; oh my god i overthought it.
+; it's an evaluation order problem again.
+
+; the interpreter uses applicative-order evaluation, so it starts from the inside out, first evaluating the arguments before applying the operand which is the procedure to be applied to those arguments.
+
+; when we call sqrt-iter again, we need to evaluate its arguments again. so we'll call sqrt-iter again, and again, and again forever.
+; we'll never actually get around to evaluating the predicate of new-if, because we'll forever be recursively calling the interpreter rules on the sqrt-iters else clause consequent expression.
+
+
+; Exercise 1.7 ##
+; The good-enough? test used in computing square roots will not be very effective for finding the square roots of very small numbers. Also, in real computers, arithmetic operations are almost always performed with limited precision. This makes our test inadequate for very large numbers. Explain these statements, with examples showing how the test fails for small and large numbers. An alternative strategy for implementing good-enough? is to watch how guess changes from one iteration to the next, and to stop when the change is a very small fraction of the guess. Design a square-root procedure that uses this kind of test. Does this work better for small and large numbers?
+
+
+; okay, let's first dissect why the good-enough? test will not be very effective at finding the square roots of very small numbers?
+; we defined good-enough? as a procedure acting on two operands, the arguments of which are the current guess and starting problem's radicand.
+; good-enough? takes the square of the current guess and subtracts the original radicand, then checks if the absolute value of the that calculation is less than .001.
+; effectively this tells us if the square of the guess is within .001 of the actual radicand. 
