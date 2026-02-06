@@ -831,14 +831,14 @@ in addition to the primitive predicates >, <, and =, there are logical compositi
 
 ; we'll rewrite sqrt with it component procedures defined locally, thus not polluting any shared scope:
 
-
+; this is broken...
 (define (sqrt x)
-  (define (good-enough? guess x)
-    (< (abs (- (square guess) x)) 0.001))
   (define (square x)
     (* x x))
   (define (average x y)
-    (/ (x + y) 2))
+    (/ (x + y) 2)) ; <------------- this was the culprit. leaving this here for posterity.
+  (define (good-enough? guess x)
+    (< (abs (- (square guess) x)) 0.001))
   (define (improve guess x) (average guess (/ x guess)))
   (define (sqrt-iter guess x)
     (if (good-enough? guess x)
@@ -852,31 +852,101 @@ in addition to the primitive predicates >, <, and =, there are logical compositi
 ; need to dig in and find the bug
 ; but right now i need to get ready for work, cause i also need to eat.
 
+; try it again. maybe i missed something...
+(define (sqrt x)
+  (define (square x)
+    (* x x))
+  (define (average x y)
+    (/ (+ x y) 2))
+  (define (good-enough? guess x)
+    (< (abs (- (square guess) x)) 0.001))
+  (define (improve guess x) (average guess (/ x guess)))
+  (define (sqrt-iter guess x)
+    (if (good-enough? guess x)
+        guess
+        (sqrt-iter (improve guess x) x)))
+  (sqrt-iter 1.0 x))
+
+(sqrt 100)
+
+; the nesting of definitions is called block structure
+; it's basically the right solution to the simplest name-packaging problem.
+; but there's a better one.
+; we can not only internalize the sub procedure definitions, but we can simplify them too
+
+(define (square x)
+  (* x x))
+(define (average x y)
+  (/ (+ x y) 2))
+(define (sqrt x)
+  (define (good-enough? guess)
+    (< (abs (- (square guess) x)) 0.001))
+  (define (improve guess)
+    (average guess (/ x guess)))
+  (define (sqrt-iter guess)
+    (if (good-enough? guess)
+        guess
+        (sqrt-iter (improve guess))))
+  (sqrt-iter 1.0))
+
+(sqrt 100)
+
+; okay, i get it.
+; square and average are sort of separate in a way from sqrt, good-enough?, improve-guess, and sqrt-iter
+; good-enough?, improve-guess, and sqrt-iter are defined in terms of sqrt
+; sqrt has 1 input, which we call x
+; that same x variable and value is used in good-enough?, improve-guess, and sqrt-iter
+; so when we nest the definitions of sub procedures under our... what? parent(?) procedure, we don't have to specify in the definition of each sub procedure that the procedure takes x as an input.
+; x is already defined as an input at the top level. therefore, we can _use_ it in any sub procedure without explicitly specifying in the sub procedure definition that we are going to.
+
+; why though does this non apply to square and average?
+; ooooh, because square and average are not defined in terms of sqrt
+; we (define square x) as (* x x)
+; but 'x' in this case is not the same 'x' we use in sqrt
+; we pass the guess variable into square
+; likewise with average, we use the variable 'x' from sqrt in the procedure, but not as a sole input
+; the inputs to average or the guess variable, and x divided by the guess variable
+; so we can nest those definitions, but we can't omit the input x like we can for good-enough?, improve-guess, and sqrt-iter, because it's _not the same x_
+
+; this concept is called lexical scoping
 
 
+; 1.2 Procedures and the Processes They Generate ##
+
+#|
+quick review:
+  - now we've looked at some of the elements of programming...
+  - we combine the simplest entities the language is concerned with (primitive expressions) into more complex compound elements which can be abstracted into a name and manipulated as units
+  - we deal with procedures and data in programming
+    - data: the information
+    - procedures: rules for manipulating the information
+  - expressions can be simple numerics, or use simple arithmetic to calculate on numerics
+  - we can use expressions to build procedures, and assign these to names using (define (name inputs)
+                                                                                  (procedure inputs))
+  - we can use conditional logic to route the procedure along varying paths depending on the outcome of evaluating expressions
+  - and we learned we can scope definitions of procedures to a parent procedure, and any inputs to the sub procedures that are defined first in the parent procedure can be used without explicitly declaring them in the sub procedure definitions.
+|#
+
+; but those elements outlined above are not enough to become an expert programmer
+; think of it like chess...
+; you can know how the pieces move, but if you don't know typical openings, tactics, or strategy, you cannot be a very good chess player
+; it takes experience to become familiar with the _patterns_ in the domain
+; and without that experience, we don't know which moves to make (which procedures to define) or the consequences of making a move (of executing a procedure)
+
+; we need to be able to visualize consequences, to know what will occur when some procedure we've written is executed.
+; the computer will only do what we tell it to do.
+; if we don't understand how it will behave when we tell it to do something, we could produce unintended consequences.
+; the procedures we execute generate processes.
+; the procedure is the definition of how a process should occur.
+; the process is a pattern generated by the procedure.
+
+; a procedure is a patter for the _local evolution_ of a computational process.
+; it defines how each stage of the process is built upon the previous stage.
+; we want to make statements not about the local scope, but about the _global_ behavior of a process whose local evolution has been specified by a procedure.
+; we will examine next some patterns, common "shapes" for processes generated by simple procedures.
+; the procedures used to exhibit these shapes will be simple for the purposes of demonstration.
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+; 1.2.1 Linear Recursion and Iteration ##
 
 
