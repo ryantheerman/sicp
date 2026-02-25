@@ -1084,3 +1084,296 @@ quick review:
 
 ; see above... the procedure fact-iter is a recursive procedure. it calls itself in the else clause of the if conditional.
 ; but the _process_ is iterative, not recursive. the interpreter keeps track of the state of the procedure variables at each iteration, and does not need to maintain any sense of location in a series of operations.
+
+
+; 1.1.2 Tree Recursion ##
+
+; tree recursion is another common pattern of computation.
+; let's look at the sequence of fibonacci numbers to demonstrate, wherein each number is computed by summing the preceding two numbers
+
+; 0, 1, 1, 2, 3, 5, 8, 13, 21, ...
+
+; we can define this with the rule
+;           / 0                     if n = 0
+; fib(n) = <  1                     if n = 1
+;           \ fib(n-1) + fib(n-2)   otherwise
+
+; we can translate this into a recursive procedure
+(define (fib n)
+  (cond ((= n 0) 0)
+        ((= n 1) 1)
+        (else (+ (fib (- n 1))
+                 (fib (- n 2))))))
+
+(fib 0) ; 0
+(fib 1) ; 1
+(fib 2) ; 1
+(fib 3) ; 2
+(fib 4) ; 3
+(fib 5) ; 5
+(fib 6) ; 8
+(fib 7) ; 13
+(fib 8) ; 21
+(fib 9) ; 34
+(fib 10) ; 55
+
+; let's look at the pattern of this computation
+; to compute (fib 5), we need to compute (fib 4) and (fib 3)
+; to compute (fib 4), we need to compute (fib 3) and (fib 2)
+; the process evolves like a tree:
+
+#|
+                                                                             fib 5
+                                                                              / \
+                                                   /-------------------------/   \-------------------------\
+                                                 /                                                           \
+                                              fib 4                                                         fib 3
+                                               / \                                                          / \             
+                                   /----------/   \----------\                                      /------/   \------\     
+                                 /                             \                                  /                     \   
+                             fib 3                            fib 2                            fib 2                   fib 1
+                              / \                              / \                              / \                      |  
+                      /------/   \------\              /------/   \------\              /------/   \------\              1  
+                    /                     \          /                     \          /                     \
+                 fib 2                   fib 1     fib 1                  fib 0     fib 1                  fib 0
+                  / \                      |         |                      |         |                      |  
+          /------/   \------\              1         1                      0         1                      0  
+        /                     \
+     fib 1                   fib 0
+       |                       |
+       1                       0
+|#
+
+; that was laborious lol
+; notice the branches split into two at each level (except the bottom), reflecting that the fib procedure calls itself twice at each invocation.
+; this well illustrates tree recursion, but its a terrible way to compute fibonacci
+; there is much duplication of work (in the diagram above (fib 3) occurs twice. that's a ton of work)
+; the number of leaves of the tree (terminal nodes where we compute (fib 1) or (fib 0)) is equal to fib(n+1)
+; so (fib 0) will have just one leaf... 0
+; (fib 1) will have one leaf... 1
+; (fib 2) will have two leaves...0 and 1
+; (fib 3) will have three leaves (value of (fib 4))
+; (fib 4) will have five leaves (value of fib 5)
+; (fib 5) will have 8 leaves (value of fib 6)
+; (fib 6) will have 13 leaves (value of fib 7)
+; etc
+; the value of (fib n) grows exponentially with n in accord with the _golden ratio_
+; thus the number of steps needed to compute (fib n) grows exponentially with the input
+
+; however, the space required for the computation only grows linearly with the input.
+; we only need to track of which nodes are above us in the tree at any point.
+; in general, the number of steps in a tree-recursive process will be equal to the number of nodes in the tree, while the space required will be proportional to the maximum depth of the tree
+
+; let's use an iterative process to compute fibonacci
+; we'll define a pair of integers a and b, initialized to (fib 1) and (fib 0)
+; and we'll repeatedly apply the simultaneous transformations:
+; a <- a + b
+; b <- a
+(define (fib n)
+  (fib-iter 1 0 n))
+(define (fib-iter a b count)
+  (if (= count 0)
+      b
+      (fib-iter (+ a b) a (- count 1))))
+
+(fib 0) ; 0
+(fib 1) ; 1
+(fib 2) ; 1
+(fib 3) ; 2
+(fib 4) ; 3
+(fib 5) ; 5
+(fib 6) ; 8
+(fib 7) ; 13
+(fib 8) ; 21
+
+(fib 9) ; 34
+; (fib-iter 1 0 9)
+; (fib-iter 1 1 8)
+; (fib-iter 2 1 7)
+; (fib-iter 3 2 6)
+; (fib-iter 5 3 5)
+; (fib-iter 8 5 4)
+; (fib-iter 13 8 3)
+; (fib-iter 21 13 2)
+; (fib-iter 34 21 1)
+; (fib-iter 55 34 0)
+; 34
+
+(fib 10) ; 55
+
+; this is a linear iteration.
+; at any point in the computation, we just need to know the state of a, b, and count, which is calculated at each stage
+; so the number of steps needed to calculate a fibonacci number grows linearly with the input, while the tree-recursive process we defined above grows exponentially with the input
+; the difference in the number of steps is enormous, even for small inputs.
+; for example, using the tree recursive process to calculate (fib 9) would take 55 leaf nodes of the tree alone, not to mention the branches leading back to the root
+; linearly, (fib 9) takes 11 iterations. far fewer.
+
+; don't run away with the idea that tree-recursive processes are useless
+; processes that operate on hierarchically structured data rather than numbers find in tree recursion a powerful tool
+; and even if tree-recursive processes are not the most efficient, they are useful in figuring out how to design programs.
+; the tree-recursive fib procedure is more straightforward and easy to understand/formulate
+
+; example: counting change
+; i don't follow the thinking. they say that we are trying to come up with an algorithm for counting the number of ways we can make change using any given amount of money.
+
+; the number of ways to make change of amount a using n kinds of coins equals....
+;   - the number of ways to change amount a using all but the first type of coin, plus
+;   - the number of ways to change amount a - d where all n kinds of coins where d is the denomination of the first coin
+; so in the case of 1.00 dollar and standard us denominations, that would work out to be...
+; (25 / 10 / 5 / 1)
+;   - the number of ways to change 1.00 using dimes, nickles, and pennies
+;   - the number of ways to change 0.75 using quarters, dimes, nickles, and pennies.
+
+; the reasoning...
+; observe that the ways to make change can be divided into two groups: those that do not use any of the first kind of coin, and those that do.
+; okay, yes, i see that.
+; therefore the total number of ways to make change for some amount is equal to the number of ways to make change for the amount without using any of the first kind of coin, plus the number of ways to make change assuming that we do use the first kind of coin.
+; okay, i get that too.
+; but the latter number is equal to the number of ways to make change for the amount that remains after using a coin of the first kind.
+; what?
+; not sure i follow that, but let's proceed and see if it comes together in my mind
+
+; we can recursively reduce the problem of changing a given amount to the problem of changing smaller amounts using fewer kinds of coins.
+; consider this reduction rule carefully, and convince yourself that we can use it to describe an algorithm if we specify the following degenerate cases:
+;   - if _a_ is exactly 0, we should that as 1 way to make change
+;   - if _a_ is less than 0, we should count that as 0 ways to make change
+;   - if _n_ is 0, we should count that as 0 ways to make change
+
+; work through this with 10 cents using nickels and dimes...
+#|
+a = 10
+n = 2
+using nickles and dimes...
+changing 10 using all but the first denomination (5)
+1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1
+changing 10 - 5 using all denominations of coins
+5
+1 + 1 + 1 + 1 + 1
+that's 3 ways to make change of 10 using nickles and pennies
+
+and if we change 10 using all denominations of coins from the start:
+5 + 5
+5 + 1 + 1 + 1 + 1 + 1
+1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1
+that's 3 ways to make change of 10 using nickles and pennies
+
+am i supposed to use a dime? the note says work through in detail how the reduction rule applies to the problem of making change for 10 cents using pennies and nickels, so i think not.
+but if we include the dime, there are 4 ways to make change of 10 cents
+|#
+
+(define (count-change amount) (cc amount 5))
+(define (cc amount kinds-of-coins)
+  (cond ((= amount 0) 1)
+        ((or (< amount 0) (= kinds-of-coins 0)) 0)
+        (else (+ (cc amount
+                     (- kinds-of-coins 1))
+                 (cc (- amount
+                        (first-denomination
+                         kinds-of-coins))
+                     kinds-of-coins)))))
+(define (first-denomination kinds-of-coins)
+  (cond ((= kinds-of-coins 1) 1)
+        ((= kinds-of-coins 2) 5)
+        ((= kinds-of-coins 3) 10)
+        ((= kinds-of-coins 4) 25)
+        ((= kinds-of-coins 5) 50)))
+
+(count-change 10)
+  
+(count-change 100)
+
+#|
+let's work through (count-change 10) to better understand the recursion
+(count-change 10)
+  (cc 10 5)  4 + 0 = 4
+    is amount 0? no
+    is amount < 0 OR kinds-of-coins 0? no
+    (+ (cc 10 4) (cc (- 10 50) 5))
+                |                   
+      ---------------------------------------------
+      |                                           |
+      (cc 10 4)  4 + 0 = 4                        (cc -40 5)
+        is amount 0? no                             is amount 0? no
+        is amount < 0 OR kinds-of-coins 0? no       is amount < 0 OR kinds-of-coins 0? yes
+        (+ (cc 10 3) (cc (- 10 25) 4))              0
+                    |
+          ---------------------------------------------
+          |                                           |
+          (cc 10 3)  3 + 1 = 4                        (cc -15 4)
+            is amount 0? no                           is amount 0? no
+            is amount < 0 OR kinds-of-coins 0? no     is amount < 0 OR kinds-of-coins 0? yes
+            (+ (cc 10 2) (cc (- 10 10) 3))            0
+                        |
+              -------------------------------------------
+              |                                         |
+              (cc 10 2)  1 + 2 = 3                      (cc 0 3)
+                is amount 0? no                           is amount 0? yes
+                is amount < 0 OR kinds-of-coins 0? no     1
+                (+ (cc 10 1) (cc (- 10 5) 2))
+                            |
+                  -------------------------------------------
+                  |                                         |
+                  (cc 10 1)  0 + 1 = 1                      (cc 5 2)  1 + 1 = 2
+                    is amount 0? no                           is amount 0? no
+                    is amount < 0 OR kind-of-coins 0? no      is amount < 0 OR kind-of-coins 0? no
+                    (+ (cc 10 0) (cc (- 10 1) 1))             (+ (cc 5 1) (cc (- 5 5) 2)) -----------------------------------------
+                                |                                                                                                 |
+                      -------------------------------------------                                                     -------------------------------------------
+                      |                                         |                                                     |                                         |
+                      (cc 10 0)                                 (cc 9 1)  0 + 1 = 1                                   (cc 5 1)  0 + 1 = 1                       (cc 0 2)
+                        is amount 0? no                           is amount 0? no                                       is amount 0? no                           is amount 0? yes
+                        is amount < 0 OR kind-of-coins 0? yes     is amount < 0 OR kind-of-coins 0? no                  is amount < 0 OR kinds-of-coins 0? no     1
+                        0                                         (+ (cc 9 0) (cc (- 9 1) 1))                           (+ cc (5 0) (cc (- 5 1) 1))
+                                                                             |                                                     |                                                          
+                                                                    ---------------------------------------------                  --------------------------------------------------------------------   
+                                                                    |                                           |                                                                             |       |
+                                                                    (cc 9 0)                                    (cc 8 1)   0 + 1 = 1                                                          0       (cc 4 1)
+                                                                      is amount 0? no                             is amount 0? no                                                                     |
+                                                                      is amount < 0 OR kinds-of-coins 0? yes      is amount < 0 OR kind-of-coins 0? no                                                ------------
+                                                                      0                                           (+ (cc 8 0) (cc (- 8 1) 1))                                                         |          |
+                                                                                                                             |                                                                        0          (cc 3 1)
+                                                                                                                  ------------                                                                                   |
+                                                                                                                  |          |                                                                                   ------------
+                                                                                                                  0          (cc 7 1)                                                                            |          |
+                                                                                                                             |                                                                                   0          (cc 2 1)
+                                                                                                                             ------------                                                                                   |
+                                                                                                                             |          |                                                                                   ------------
+                                                                                                                             0          (cc 7 1)                                                                            |          |
+                                                                                                                                        |                                                                                   0          (cc 1 1)
+                                                                                                                                        ------------                                                                                   |
+                                                                                                                                        |          |                                                                                   ------------
+                                                                                                                                        0          (cc 6 1)                                                                            |          |
+                                                                                                                                                   |                                                                                   0          (cc 0 1)
+                                                                                                                                                   ------------                                                                                   |
+                                                                                                                                                   |          |                                                                                   1
+                                                                                                                                                   0          (cc 5 1)
+                                                                                                                                                              |
+                                                                                                                                                              ------------
+                                                                                                                                                              |          |
+                                                                                                                                                              0          (cc 4 1)
+                                                                                                                                                                         |
+                                                                                                                                                                         ------------
+                                                                                                                                                                         |          |
+                                                                                                                                                                         0          (cc 3 1)
+                                                                                                                                                                                    |
+                                                                                                                                                                                    ------------
+                                                                                                                                                                                    |          |
+                                                                                                                                                                                    0          (cc 2 1)
+                                                                                                                                                                                               |
+                                                                                                                                                                                               ------------
+                                                                                                                                                                                               |          |
+                                                                                                                                                                                               0          (cc 1 1)
+                                                                                                                                                                                                          |
+                                                                                                                                                                                                          ------------
+                                                                                                                                                                                                          |          |
+                                                                                                                                                                                                          0          (cc 0 1)
+                                                                                                                                                                                                                     |
+                                                                                                                                                                                                                     1
+                                                                                                                                                                                                                     
+
+
+
+
+
+                                                                                                                                                                                    
+|#
