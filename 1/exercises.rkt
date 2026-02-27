@@ -531,3 +531,97 @@
 (define (k n) (* 5 n n))
 
 ; Give concise mathematical definitions for the functions computed by the procedures f, g, and h for positive integer values of n. For example, (k n) computes 5n^2.
+
+
+; Exercise 1.11 ##
+;       / n  if  n<3,
+; f(n)=<
+;       \ f(n-1)+2f(n-2)+3f(n-3)  if  n>=3
+
+; Write a procedure that computes f by means of a recursive process. Write a procedure that computes f by means of an iterative process.
+
+; recursive process:
+(define (compute-f n)
+  (if (< n 3) n
+      (+ (compute-f (- n 1))
+         (compute-f (- n 2))
+         (compute-f (- n 3)))))
+
+(compute-f 0)
+(compute-f 1)
+(compute-f 2)
+(compute-f 3)
+(compute-f 4)
+(compute-f 5)
+(compute-f 6)
+(compute-f 7)
+(compute-f 8)
+(compute-f 9)
+(compute-f 10)
+
+; iterative process
+; we made the tree recursive fibonacci process into an iterative process by using 3 state variables
+; this function is not so different from fibonacci
+; (fibonacci called itself 2 times on every iteration. super fibonacci calls itself 3 times)
+; so could we simply track 4 state variables instead of 3?
+; we could use a trio of integers a, b, and c, initialized to f(3) = 3, f(2) = 2, and f(1) = 1
+; and repeatedly apply the simultaneous transformations:
+;   a <- a + b + c
+;   b <- a
+;   c <- b
+
+(define (fun n)
+  (super-fib-iter 3 2 1 n))
+(define (super-fib-iter a b c count)
+  (if (= count 1)
+      c
+      (super-fib-iter (+ a b c) a b (- count 1))))
+
+(fun 1)
+(fun 2)
+(fun 3)
+(fun 4)
+(fun 5)
+(fun 6)
+(fun 7)
+(fun 8)
+(fun 9)
+(fun 10)
+
+; okay, yeah that works.
+; but understand it.
+
+; (fun 9)
+; (super-fib-iter 3 2 1 9)
+; (super-fib-iter 6 3 2 8)
+; (super-fib-iter 11 6 3 7)
+; (super-fib-iter 20 11 6 6)
+; (super-fib-iter 37 20 11 5)
+; (super-fib-iter 68 37 20 4)
+; (super-fib-iter 125 68 37 3) could stop here if we're checking (if (= count 3) c (super-fib-iter (+ a b c) a b (- count 1)))
+; (super-fib-iter 230 125 68 2)
+; (super-fib-iter 423 230 125 1)
+
+(fun 11)
+
+(define (more-fun n)
+  (optimized-super-fib-iter 3 2 1 n))
+(define (optimized-super-fib-iter a b c count)
+  (if (= count 3)
+      a
+      (optimized-super-fib-iter (+ a b c) a b (- count 1))))
+
+; (more-fun 1)
+; (more-fun 2)
+; the above 2 hang forever because we never hit the exit condition
+; so more-fun doesn't work in all cases
+
+(more-fun 3)
+(more-fun 4)
+(more-fun 5)
+(more-fun 6)
+(more-fun 7)
+(more-fun 8)
+(more-fun 9)
+(more-fun 10)
+(more-fun 11)
