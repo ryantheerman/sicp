@@ -700,14 +700,12 @@
 ; i've bounded the horizontal, left and right.
 ;   if r = 0, element = 1 (bounds the vertical (top. don't need to bound bottom it can go forever))
 
-
 (define (pascal r c)
-  (cond ((= r 0) 1)
+  (cond ((= r 0) 1) ; don't need a condition for (= r 1) because (= c r) already covers that when c is 1
         ((= c 0) 1)
         ((= c r) 1)
         (else (+ (pascal (- r 1) (- c 1))
                  (pascal (- r 1) c)))))
-
 
 (pascal 0 0)
 
@@ -786,6 +784,9 @@
 (pascal 10 9)
 (pascal 10 10)
 
+; hell yeah
+
+
 ; process will grow without bound
 (define (pascal-2 r c)
   (+ (pascal-2 (- r 1) (- c 1))
@@ -798,7 +799,80 @@
 ; executed (pascal-2 0 0)
 ; memory usage grew to 20G until i killed the process.
 
-; hell yeah
 ; problems...
-;   does not handle negative numbers
-;   does not handle the user passing in a column index greater than the row index
+
+; does not handle negative numbers
+; if the user enters a negative number for the row, the process grows without bound
+(pascal -1 1)
+
+; if the user enters a negative for the column, the procedure returns 2^row
+(pascal 5 -1)
+; why does it do that?
+; because the horizontal boundary conditions never fire
+; the only boundary condition we can reach is (= r 0)
+; and we call pascal twice every iteration until we reach that boundary
+; so on the first iteration, r = 5 and  we need to call pascal 2 times
+; on the second iteration, r = 4 and we need to call pascal 4 times
+; on the third iteration, r = 3 and we need to call pascal 8 times
+; on the 4th iteration, r = 2 we need to call pascal 16 times
+; on the fifth iteration, r = 1 we need to call pascal 32 times
+; on the sixth iteration, r = 0 and we hit the boundary condition returning 1. the 32 returned 1s are summed for and end result of 32
+
+; does not handle the user passing in a column index greater than the row index
+; in pascal's triangle the width of a row equals its position in the depth of the triangle
+; 0 indexed...
+;   row 2 has 3 elements
+;   row 3 has 4 elements
+;   row 4 has 5 elements, and so on
+; if the user enters an column index greater than their row index, it will be impossible for the process to arrive at horizontal boundary conditions before arriving at the vertical boundary condition
+; so the output will again be the 2^row
+; pascal will be called twice on each iteration, so the number of calls increases exponentially with the value of the row input
+
+(pascal 2 100)
+(pascal 3 100)
+(pascal 4 100)
+(pascal 5 100)
+
+; fundamentally, if we enter an element beyond the boundary of what is possible, we of course cannot reach the boundary.
+
+(pascal 30 16)
+
+(pascal 31 16)
+
+; pascal's triangle is symmetrical, so the largest values will always be where the column input = row input / 2
+
+; how would i incorporate error handling?
+; could i just add conditions to return 0 if either the row or column input is out of bounds?
+
+(define (pascal r c)
+  (cond ((< r 0) 0) ; handles negative row inputs
+        ((< c 0) 0) ; handles column inputs beyond the left boundary
+        ((> c r) 0) ; handles column inputs beyond the right boundary
+        ((= r 0) 1) ; vertical boundary condition
+        ((= c 0) 1) ; horizontal boundary condition left
+        ((= c r) 1) ; horizontal boundary condition right
+        (else (+ (pascal (- r 1) (- c 1))
+                 (pascal (- r 1) c)))))
+
+
+(pascal 10 11)
+
+; nice. that works. that's better.
+
+; there's still the issue of handling the case where the user enters an input that will return a value greater than can be packed into whatever datatype (number, integer) of the return value
+
+(pascal 200 0); 0
+(pascal 200 1); 200
+(pascal 200 2); 19900
+(pascal 200 3); 1313400
+(pascal 200L0 4L0); 64684950
+
+; not too big, but takes a long time
+(pascal 200L0 5L0); 2535650040
+
+(pascal 200L0 6L0)
+
+; by default the numbers are treated as integers it seems (max size around 2.7 billion)
+; but with above notation i can indicate that the numbers should be treated as longs
+; which should output a long? not sure.
+; letting (pascal 200L0 6L0) calculate now.
