@@ -598,7 +598,7 @@
 ; (super-fib-iter 20 11 6 6)
 ; (super-fib-iter 37 20 11 5)
 ; (super-fib-iter 68 37 20 4)
-; (super-fib-iter 125 68 37 3) could stop here if we're checking (if (= count 3) c (super-fib-iter (+ a b c) a b (- count 1)))
+; (super-fib-iter 125 68 37 3) could stop here if we're checking (if (= count 3) c (super-fib-iter (+ a b c) a b (- count 1))) --- does not work when n < 3 though. hangs forever.
 ; (super-fib-iter 230 125 68 2)
 ; (super-fib-iter 423 230 125 1)
 
@@ -625,3 +625,180 @@
 (more-fun 9)
 (more-fun 10)
 (more-fun 11)
+
+
+; Exercise 1.12 ##
+; The following pattern of numbers is called _Pascal's triangle_.
+;         1
+;       1   1
+;     1   2   1
+;   1   3   3   1
+; 1   4   6   4   1
+;        ...
+; the numbers at the edge of the triangle are all 1, and each number inside the triangle is the sum of the two numbers above it. Write a procedure that computes elements of Pascal's triangle by means of a recursive process.
+
+; compute by layers?
+; layer 1 = 1
+; layer 2 = 1 1
+; those are givens
+; but at the third layer i can start computing the layer by knowing that the edge is always 1
+; and the interior is always the sum of the two numbers above the one being computed.
+
+; what is the actual ask. the problem states "write a procedure that computes elements of pascal's triangle by means of a recursive process". does that mean "computes successive rows of pascal's triangle"?
+; i think so. that's a fair interpretation.
+; so given an input n, recursively compute pascal's triangle to depth n.
+
+
+; how to compute that?
+; well, we know that the edge elements of the triangle will always be 1
+; we know that the width of the triangle increases linearly with the depth (row 1 has 1 element, row 2 has 2 elements, row 3 has 3 elements, and so on), so we know how many calculations we'll need to perform for each row.
+; 1: no calculations
+; 2: no calculations
+; 3: 1 calculation
+; 4: 2 calculations
+; 5: 3 calculations
+; 6: 4 calculations
+; ...
+; each row is bounded by a 1, so the number of calculations for that row will be (row number - 2)
+
+; what to do with this information.
+
+; or does it mean "write a procedure that computes a specific element of pascal's triangle, given a row r and a column c?"
+
+; is the problem asking to compute a single number somewhere in the triangle, given certain inputs?
+; or a row of the triangle, given a certain input?
+; or all rows of the triangle up to a specified row, given a certain input?
+; are there other ways to interpret the word "element"?
+
+; think about this
+; think about the triangle
+; study and look for the relationships between axes that might be useful in the calculation
+
+; go back and review the section on the difference between math and programming...
+
+
+; slept on it. second pass.
+; let's notice some things about the triangle.
+; not sure yet what might be useful.
+; - element at edge always = 1
+; - edge - 1 (in either direction) always = row# - 1 (unless we 0 index, in which case (edge - 1) = row #)
+; starting at 0 indexed r[4]...
+; c[3] = ....... i'm overthinking this...
+
+; only need to work with row and column indexes. just call them r and c
+;   if c = 0, element = 1 (bounds the left edge when called recursively)
+;   if c = r, element = 1 (bounds the right edge when called recursively)
+; i must have boundary conditions, both horizontally and vertically.
+; because the recursiveness needs to involve subtracting from the input...
+; 1 from the row and 1 from the column to get the left most operand of the sum function
+; and simply 1 from the row to get the rightmost operand of the sum function
+; if any recursive call goes out of bounds to where no elements exist, it breaks.
+; does it break? not sure how it would behave.
+; probably the process would grow without bound. it would enter into negative numbers and never stop until i ran out of memory or started dealing with numbers too large to fit in the data type
+; so it would look to hang until it crashed or locked up the system.
+; will test that after solving the problem
+; i've bounded the horizontal, left and right.
+;   if r = 0, element = 1 (bounds the vertical (top. don't need to bound bottom it can go forever))
+
+
+(define (pascal r c)
+  (cond ((= r 0) 1)
+        ((= c 0) 1)
+        ((= c r) 1)
+        (else (+ (pascal (- r 1) (- c 1))
+                 (pascal (- r 1) c)))))
+
+
+(pascal 0 0)
+
+(pascal 1 0)
+(pascal 1 1)
+
+(pascal 2 0)
+(pascal 2 1)
+(pascal 2 2)
+
+(pascal 3 0)
+(pascal 3 1)
+(pascal 3 2)
+(pascal 3 3)
+
+(pascal 4 0)
+(pascal 4 1)
+(pascal 4 2)
+(pascal 4 3)
+(pascal 4 4)
+
+(pascal 5 0)
+(pascal 5 1)
+(pascal 5 2)
+(pascal 5 3)
+(pascal 5 4)
+(pascal 5 5)
+
+(pascal 6 0)
+(pascal 6 1)
+(pascal 6 2)
+(pascal 6 3)
+(pascal 6 4)
+(pascal 6 5)
+(pascal 6 6)
+
+(pascal 7 0)
+(pascal 7 1)
+(pascal 7 2)
+(pascal 7 3)
+(pascal 7 4)
+(pascal 7 5)
+(pascal 7 6)
+(pascal 7 7)
+
+(pascal 8 0)
+(pascal 8 1)
+(pascal 8 2)
+(pascal 8 3)
+(pascal 8 4)
+(pascal 8 5)
+(pascal 8 6)
+(pascal 8 7)
+(pascal 8 8)
+
+(pascal 9 0)
+(pascal 9 1)
+(pascal 9 2)
+(pascal 9 3)
+(pascal 9 4)
+(pascal 9 5)
+(pascal 9 6)
+(pascal 9 7)
+(pascal 9 8)
+(pascal 9 9)
+
+(pascal 10 0)
+(pascal 10 1)
+(pascal 10 2)
+(pascal 10 3)
+(pascal 10 4)
+(pascal 10 5)
+(pascal 10 6)
+(pascal 10 7)
+(pascal 10 8)
+(pascal 10 9)
+(pascal 10 10)
+
+; process will grow without bound
+(define (pascal-2 r c)
+  (+ (pascal-2 (- r 1) (- c 1))
+     (pascal-2 (- r 1) c)))
+
+(pascal-2 0 0)
+
+; yes. pulled up htop to watch memory usage.
+; was at ~2.0G
+; executed (pascal-2 0 0)
+; memory usage grew to 20G until i killed the process.
+
+; hell yeah
+; problems...
+;   does not handle negative numbers
+;   does not handle the user passing in a column index greater than the row index
