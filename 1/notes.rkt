@@ -1117,6 +1117,8 @@ quick review:
 (fib 9) ; 34
 (fib 10) ; 55
 
+(fib 12)
+
 ; let's look at the pattern of this computation
 ; to compute (fib 5), we need to compute (fib 4) and (fib 3)
 ; to compute (fib 4), we need to compute (fib 3) and (fib 2)
@@ -1185,6 +1187,9 @@ quick review:
 (fib 6) ; 8
 (fib 7) ; 13
 (fib 8) ; 21
+
+(fib 10)
+
 
 (fib 9) ; 34
 ; (fib-iter 1 0 9)
@@ -1367,5 +1372,7 @@ let's work through (count-change 10) to better understand the recursion
                                                                                                                                                                                                           1
 |#
 
+
+; 1.2.3 Orders of Growth ##
 
 
