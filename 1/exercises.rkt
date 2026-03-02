@@ -876,3 +876,85 @@
 ; but with above notation i can indicate that the numbers should be treated as longs
 ; which should output a long? not sure.
 ; letting (pascal 200L0 6L0) calculate now.
+
+
+; Exercise 1.13 ##
+; Prove that Fib(n) is the closest integer to phi^n/root(5) where phi = (1 + root(5))/2.
+; Hint: let psi = (1 - root(5))/2
+; Use induction and the definition of the Fibonacci numbers (see Section 1.2.2) to prove that Fib(n) = (phi^n - psi^n)/root(5)
+
+; not really sure how to go about solving this one.
+; proving it.
+; but let's take a stab at it.
+; i want to at least wrap my head around the problem.
+
+; let's just approximate some of the calculations
+
+; i need to prove that a given fibonacci element is phi to the power of the index of that element in the fibonacci sequence, divided by 2. let's start there.
+; and phi = (1+root5)/2
+; so i need to prove that the value of the fibonacci number at index n is the closest integer to the value of ((1 + root5)/2)^n/root5
+
+; we can approximate that. let's try Fib(4)
+
+; 0, 1, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89, ...
+; 0  1  2  3  4  5  6  7   8   9   10  11
+
+; (fib 4) = 3
+; root5 = ~2.236
+; so ((1 + 2.236)/2)^4/2.236 should equal approximately 3
+; (3.236/2)^4/2.236
+(/ 3.236 2)
+; (1.618)
+
+; bro don't do all this by hand.
+; write a procedure.
+; i need a way to approximate square roots. can rip this from the newton's method section
+; and an exponent procedure
+; maybe there's one already provided in scheme, but i don't know it.
+; won't be hard to throw a simple one together.
+
+(define (approx-fib i)
+  (/ (to-the-power-of (/ (+ 1 (root 5)) 
+                  2) 
+               i) 
+     (root 5)))
+
+(define (to-the-power-of base exponent)
+  (define (compute-power cnt output)
+    (if (= cnt exponent) output
+        (compute-power (+ cnt 1) (* base output))))
+  (compute-power 0 1))
+
+(to-the-power-of 3 3)
+
+
+(define (root x)
+  (define (square x)
+    (* x x))
+  (define (average x y)
+    (/ (+ x y) 2))
+  (define (good-enough? guess x)
+    (< (abs (- (square guess) x)) 0.001))
+  (define (improve guess x) (average guess (/ x guess)))
+  (define (sqrt-iter guess x)
+    (if (good-enough? guess x)
+        guess
+        (sqrt-iter (improve guess x) x)))
+  (sqrt-iter 1.0 x))
+
+(approx-fib 7)
+
+; neat. that works. it's not proof of the statement, but it works.
+
+(approx-fib 12)
+
+; how do i prove something by induction?
+; from some quick reading up on it, the idea is to follow this pattern:
+; 1. write out the formula you want to prove.
+; 2. show that the formula works for some one actual number; this is called the "base" step.
+; 3. write out the formula, plugging k in place of n; you will be assuming that the formula works for a generic k, so this is the assumption step (also called the inductive hypothesis)
+; 4. write out the formula again, this time plugging k+1 in place of n; this is the induction step.
+; 5. find a way to replace some of the information in the formula in (4) with the assumption-step info in (3)
+; 6. simplify, and find some way to restate the results so that they explicitly match the formula that you're trying to prove.
+
+; going to skip this for now, but i will brush up on my discrete math coming up.
