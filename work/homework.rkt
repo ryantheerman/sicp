@@ -1,6 +1,6 @@
 ; week 1 ##
 
-; Exercise 1. ##
+; Exercise 1 ##
 ; do exercise 1.6, page 25. ... if you had trouble understanding the square root program in the book, explain instead what will happen if you use _new-if_ instead of _if_ in the pigl pig latin procedure.
 
 ; using the new-if procedure to rewrite the square root program...
@@ -51,7 +51,7 @@
 ; if we used new-if, it would call pigl trying to evaluate it's actual argument value forever, and never actually resolving to something that could be passed to new-ifs implementation.
 
 
-; Exercise 2. ##
+; Exercise 2 ##
 ; write a procedure *squares* that takes a sentence of numbers as its argument and returns a sentence of the squares of the numbers:
 ; > (squares '(2 3 4 5)
 ; (4 9 16 25))
@@ -135,7 +135,7 @@
 
 ; that works.
 
-; Exercise 3. ##
+; Exercise 3 ##
 ; Write a procedure switch that takes a sentence as its argument and returns a sentence in which every instance of the words I or me is replaced by you, while every instance of you is replaced by me except at the beginning of the sentence, where it's replaced by I (Don't worry about the capitalization of letters). Example:
 ; > (switch '(You told me that I should wake you up))
 ; (i told you that you should wake me up)
@@ -190,4 +190,30 @@
 ; > (ends-e '(please put the salami above the blue elephant))
 ; (please the above the blue)
 
+(define (ends-e input)
+  (build-output input '()))
+(define (build-output input output)
+  (if (empty? input) output
+      (build-output (bf input)
+                    (if (check-if-e (last (first input))) (sentence output (first input))
+                        output))))
+(define (check-if-e wd)
+  (if (equal? (last wd) 'e) #t
+      #f))
 
+(ends-e '(please put the salami above the blue elephant))
+
+
+; Exercise 6 ##
+; Most versions of Lisp provide *and* and *or* procedures like the ones on page 19. In principle there is no reason why these can't be ordinary procedures, but some versions of Lisp make them special forms. Suppose, for example, we evaluate
+; (or (= x 0) (= y 0) (= z 0))
+; If *or* is an ordinary procedure, all three argument expressions will be evaluated before *or* is invoked. But if the variable x has the value 0, we know that the entire expression has to be true regardless of the values of y and z. A Lisp interpreter in which *or* is a special form can evaluate the arguments one by one until either a true is found or it runs out of arguments.
+; Your mission is to devise a test that will tell you whether Scheme's *and* and *or* are special forms or ordinary functions. This is a somewhat tricky problem, but it'll get you thinking about the evaluation process more deeply than you otherwise might.
+; Why might it be advantageous for an interpreter to treat *or* as a special form and evaluate its arguments one at a time? Can you think of reasons why it might be advantageous to treat *or* as an ordinary function?
+
+; approach to solving this problem. or at least... working through this problem...
+; go back and review normal and applicative order evaluation. really wrap your head around that.
+; then trace through some *and* and *or* conditionals using each method.
+; might be worth writing order functions like Brian demonstrated to take as input some function and print out each evaluation step based on the evaluation method.
+; to get to understand evaluation better.
+; yes i'll do that. that's at least a direction i know to go in, which i trust will open doors to more thoughts regarding the above problem. currently i'm not sure how to think about it.
