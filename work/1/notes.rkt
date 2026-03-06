@@ -184,21 +184,163 @@ hello ; 5
 ; if false, the else case (the recursive call) is evaluated
 
 
+; CS61A LECTURE 02 ##
 
+; never think the words 'go back' in the context of recursion...
+; when we call a function recursively, we are not 'going back' to the beginning of the current function
+; we are calling a new instance of the function, and we do so until the conditional arrives at the base case, at which point, we traverse the chain of functions in the reverse order returning the consequent expressions.
 
+; on if being a special form...
+; consider pigl...
+; if 'if' was _not_ a special form, if it was an ordinary procedure, first it would evaluate all the subexpressions.
+; when we get to the base case, an ordinary procedure would perform the recursive call before we return the output of the base case.
 
+; on computer science being the name of the field
+; it's not really the right name.
+; it's not a science, and it's not about computers
+; scientists ask how the world works
+; what we do is much more like engineering. we take as given how the world works and build stuff (software)
+; not wholly true. there are exploratory questions asked about computing as well.
+; surprisingly, really abstract things that are computer programs do obey certain rules
+; certain problems cannot be solved by a computer program.
+; that was discovered by asking questions about how computers work, more akin to science than engineering.
+; but most of what we do is engineering.
+; and it's not really about computers.
+; the field that's about computers is electrical engineering.
+; that's about understanding and building computers
+; what we do is build software. we do software engineering.
+; the name 'software engineering' comes with a lot of idealogical baggage
 
+; the big secret...
+; computer programming is the easiest thing in the world
+; ... as long as the program you are writing is small and it can all fit in your head at once.
+; back in the day when computers were small in capacity, you couldn't write such a big program that it wouldn't all fit in your head.
+; nowadays almost all programs are big programs
+; you've got to think of the function of it, the gui, the user experience, etc
+; programs are all big and complicated
+; what computer science is about is the control of complexity
+; we could be called complexity engineering.
 
+; how do we control complexity?
+; old way... go hire 5000 programmers and put them to work on a program
+;   but the more people you put on a project, the longer it takes
+; instead, we need to build our ideas out of bigger chunks
+;   we can hold all the big chunks of the program in our head at one time, even if not all the details.
+;   this way we can avoid the slowdown caused by piling developers into a project
+; the bigger chunking techniques are called _programming paradigms_
+; that's what this course is about
+;   functional programming
+;   object oriented programming
+;   client-server programming
+;   declarative (logic) programming
 
+; programming language people say you shouldn't talk about programming paradigms anymore
+; because the way we write programs today takes something from here and something from there and adds them together.
+; that's true, but understanding the paradigms still has value.
 
+; layers of abstraction:
+;   application --- solves some problem
+;   high level language (scheme) --- high level languages hide machine level context under the rug so you don't have to think about it, and can instead think about only the problem you are trying to solve
+;   low level language (C) --- low level language maintains the context of the machine (like where in memory a piece of data is)
+;   machine language/architecture --- this is the language the machine actually understands, while the architecture is sort of like the electrical engineers way of looking at the machine level of abstraction. how do we actually arrange the components of the machine to understand the machine language?
+;   logic gates --- circuits that compute boolean functions.
+;   transistors --- sort of like a remote controlled switch (for our purposes)
+;   quantum physics --- the base layer that determines how/why transistors do what they do.
+; each layer of abstraction operates in the context of the next layer of abstraction down
 
+; in non computer science contexts, abstract means the opposite of concrete. sometimes by it people mean 'weird'
+; in computer science, we don't talk about abstract as an adjective.
+; we talk about abstraction, which is a way to take little pieces and put them together into bigger chunks that we can then treat as black boxes.
+; standard example:
+;   components of a car.
+;   an engine is not just an engine.
+;   an alternator is not just an alternator.
+;   they are multiple small components built into larger pieces that we put a name too. we don't need to know how they work to use them.
 
+; what is a function?
+; in math, say f(x) = 2x + 6
+;   a relationship that has 0 or more inputs, and has one output
+;   every time you put in the same input, you get out the same output
+; why is the idea of function important to us?
+;   1. functions are pretty well understand, and it's easy to reason about a software system that's built functionally. we can prove theorums about functions.
+;   2. computers are doing more than one thing at a time.
+;       this has always been true in the context of time sharing on large systems
+;       but it's even more true now with multi core processors
+;       (we are pursuing multi core processors because we are reaching a limit of temperature. if we make computers operate faster, they generate so much heat that they melt the chips. so instead we make them run a little slower, but cram more of them into a chip)
+; if your program is doing a lot of things at once, and one piece of your program depends on the output that another piece of your program will produce, you can run into trouble. issues of concurrency.
+; if you program is entirely made of functions, the function doesn't care what the rest of your program is doing.
+; it doesn't care about the larger state of things in the computer
+; with functions you can much more easily get your program running in a situation that involves parallelism.
 
+; f(x) = 2x + 6
+; g(x) = 2(x + 3)
+; are f and g the same function?
+; they are the same _function_
+;   because a function doesn't care what's inside the box. it just cares that for a given input, we always get the same output
+; but different _procedures_
+;   but a procedure is a sequence of steps for computing a function
+;   f says take the input, multiply it by 2, and add 6
+;   g says take the input, add 3, and multiply it by 2
+;   different sequences of steps implementing the same function
+; inside the computer, there aren't functions. there are only procedures.
+; the way we represent a function in a computer program is to provide an algorithm, a sequence of steps, for computing that function.
+; almost always, we use the words function and procedure as if they mean the same thing.
+; but sometimes the same function can be represented by different procedures
 
+; question from the class:
+;   what if the function were instead 2x+b instead of 2x+6
+;   what if we had a _free variable_, a variable that isn't an argument to the function, that depends on what's going on outside to determine the value of that variable.
+; answer:
+;   that's not a function.
+;   it's still a procedure, but what it computes is not a function because you don't always get the same answer for the same argument.
 
+; question from the class:
+;   can there be a function for which different procedures take different amounts of time?
+; answer:
+;   absolutely yes. more in cs61b
+;   touched on in this course, but not extensively
+;   reason being, it's a lot easier to take a program that works and figure out how to make it faster, than it is to take a program that's fast and figure out how to make it work.
+;   don't optimize too early. get a minimum viable product first.
 
+; let's play buzz
+; the idea is that you start counting at 1
+; for each number you output the number, but if the number that you're up to is divisible by 7, you output buzz. or if the number contains the digit 7, you output buzz.
 
+(define (buzz num) ; function definition
+  (cond ((equal? (remainder num 7) 0) 'buzz) ; first cond clause --- if the remainder 
+        ((member? 7 num) 'buzz)
+        (else num)))
 
+; the above uses cond, an alternative to if for when there are more than 2 possibilities.
+; there are a certain few times when parentheses mean something other than 'call a procedure'. this is one of them.
+; (cond clause clause ... )
+; a clause is (test action)
+;          or (predicate consequent_expression) in sicp
+; test could be an function call. argument could also be a function call. they don't need to be, but they could.
+
+; don't think you ALWAYS need double parens after the cond declaration
+; in the above case you do
+; but that's because we put parentheses around the cond clauses
+; and if there are function calls in the clause, scheme demands they be indicated as such by parens as well.
+
+; cond is another special form.
+; it goes clause by clause in order.
+; it evaluates the test. if it's true, it evaluates the action.
+; if it's false, cond moves on to the next clause for evaluation.
+; the order of clauses in a cond matters. base case in recursive procedures must always come first.
+; you don't NEED an else clause (always true) at the end of a cond, but if no clause test evaluates to true, the cond returns 'unspecified' according to the standard.
+
+(buzz 1)
+(buzz 7)
+(buzz 16)
+(buzz 17)
+(buzz 21)
+
+; normal and applicative order
+; when we do a procedure call in scheme, we evaluate all the subexpressions, so we turn all the actual argument expressions into actual argument values.
+; then, we give the procedure the actual argument values by substituting the values for the formal parameters in the body of the procedure.
+; that is called _applicative order_
+; but it's not the only way of doing things.
 
 
 ; 1.1 The Elements of Programming ##
