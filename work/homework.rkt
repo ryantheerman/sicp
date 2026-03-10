@@ -217,3 +217,57 @@
 ; might be worth writing order functions like Brian demonstrated to take as input some function and print out each evaluation step based on the evaluation method.
 ; to get to understand evaluation better.
 ; yes i'll do that. that's at least a direction i know to go in, which i trust will open doors to more thoughts regarding the above problem. currently i'm not sure how to think about it.
+
+; dude you're totally overthinking this.
+; you can test if a lisp dialect's implementation of *and* and *or* are special forms or not by intentionally using infinite recursion.
+; a procedure is a special form if it does not follow the normal rules of evaluation.
+; the normal rules of evaluation dictate that arguments to a function must be evaluated before the operator of that function is applied to them.
+; while a procedure which is a special form does have all arguments evaluated by the interpreter before applying the procedure operator to those arguments.
+
+; to test if *or* is a special form, we can do the following:
+  ; define an infinitely recursive function
+  ; create an *or* statement where the first condition is always true (= 1 1)
+  ; and make the second condition the call to the infinitely recursive function.
+  ; if *or* is a special form, the interpreter will evaluate the first condition, find it true, and return #t immediately.
+  ; if *or* is NOT a special form, the interpreter will evaluate both conditions before applying the or operator to them.
+    ; because the second condition is infinitely recursive, it will be called forever.
+    ; the repl will appear to hang, and memory usage will grow without bound until we kill the process or the process crashes.
+
+; we can test *and* for specialness in much the same way
+  ; define an infinitely recursive function
+  ; create an *and* statement where the first condition is never true (= 0 1)
+  ; and make the second condition the call to the infinitely recursive function.
+  ; if *and* is a special form, the interpreter will evaluate the first condition, find it false, and return #f immediately
+  ; if *and* is NOT a special form, the interpreter will evaluate both conditions before applying the and operator to them.
+    ; etc etc
+
+; let's prove this.
+(define (test-and a b)
+  (and (= a b) (never-stop a b)))
+(define (never-stop x y)
+  (if (= x y) #t
+      (never-stop x (* y 2))))
+
+(test-and 0 1)
+
+; *and* is a special form.
+; using the above function, when using inputs to test-and that result in the first condition being false (and 0 1), the rest of the and procedure is short circuited and #f is returned.
+; but when modifying the procedure definition so that the first condition checks if a = a, the condition loops infinitely, proving that when the first condition evaluates to false, we skip evaluating the second condition.
+
+; let's do it for or
+(define (test-or a b)
+  (or (= a b) (never-stop a b)))
+
+(test-or 0 1)
+
+; *or* is a special form.
+
+; regarding the other questions...
+; why might it be advantageous for an interpreter to treat or as a special form and evaluate its arguments one at a time?
+; it's lean. why waste time evaluating conditions which cannot possibly affect the outcome of the *or*/*and* operation? why waste resources?
+
+; can you think of reasons why it might be advantageous to treat *or* as an ordinary function?
+; idk. in terms of utilizing resources well, not really. why perform computations that could not have any bearing on the outcome of the outer operation?
+; unless what occurs in those or conditions is a method call that alters some state?
+; but that seems counter to the philosophy of functional programming.
+
