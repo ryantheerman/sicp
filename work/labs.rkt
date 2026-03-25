@@ -180,3 +180,13 @@ racket -I simply-scheme
 
 ; not quite right. this only removes duplicates if they're the first word in the sentence.
 ; will come back to this in the morning. brain is tired. been a long day.
+; could do something like have an inner function that takes i starter sentence and an output sentence
+; check if the first word of the input sentence is a member of the input sentence butfirst.
+; if yes, don't add to the output sentence
+; else do add to the output sentence.
+; what's my base case? how do i know i'm done?
+; no more words.
+
+(define (dupls-removed sent)
+  (remove-duples))
+

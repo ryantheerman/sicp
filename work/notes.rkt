@@ -1216,6 +1216,11 @@ in addition to the primitive predicates >, <, and =, there are logical compositi
 ; this concept is called lexical scoping
 
 
+; (skipping to 1.3 following the cs61a spring 2011 course progression. will return to 1.2) ##
+; 1.3 Formulating Abstractions with Higher-Order Procedures ##
+
+
+
 ; 1.2 Procedures and the Processes They Generate ##
 
 #|
@@ -1391,7 +1396,7 @@ quick review:
 ; but the _process_ is iterative, not recursive. the interpreter keeps track of the state of the procedure variables at each iteration, and does not need to maintain any sense of location in a series of operations.
 
 
-; 1.1.2 Tree Recursion ##
+; 1.2.2 Tree Recursion ##
 
 ; tree recursion is another common pattern of computation.
 ; let's look at the sequence of fibonacci numbers to demonstrate, wherein each number is computed by summing the preceding two numbers
