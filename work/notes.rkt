@@ -1216,7 +1216,7 @@ in addition to the primitive predicates >, <, and =, there are logical compositi
 ; this concept is called lexical scoping
 
 
-; (skipping to 1.3 following the cs61a spring 2011 course progression. will return to 1.2) ##
+; (skipping to 1.3 following the cs61a spring 2011 course progression. will return to 1.2 later) ##
 ; 1.3 Formulating Abstractions with Higher-Order Procedures ##
 
 
