@@ -1221,6 +1221,33 @@ in addition to the primitive predicates >, <, and =, there are logical compositi
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 ; 1.2 Procedures and the Processes They Generate ##
 
 #|
