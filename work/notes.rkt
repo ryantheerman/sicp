@@ -1219,6 +1219,30 @@ in addition to the primitive predicates >, <, and =, there are logical compositi
 ; (skipping to 1.3 following the cs61a spring 2011 course progression. will return to 1.2 later) ##
 ; 1.3 Formulating Abstractions with Higher-Order Procedures ##
 
+; procedures are in effect abstractions that describe compound operations on numbers independent of the particular number.
+; take the cube procedure for example...
+
+(define (cube x) (* x x x))
+
+(cube 5)
+
+; this isn't dealing with the cube of a particular number, but rather it's giving us a method for obtaining the cube of any number.
+; we don't need to define cube. we could always just use the primitive multiplication procedure and numbers/variables to obtain the cube of any given number
+; but this is not optimal...
+; our _programs_ would be able to _compute_ cubes, but our _language_ would not be able to express the concept of cubing.
+; we want to be able to assign names to common patterns and then work in terms of those abstractions directly.
+; cube is a simple case, but imagine if we had to write a backend microservice using no abstractions. yikes.
+; procedures provide the ability to define and work with these abstracted patterns.
+
+; but going further, we don't want to be restricted to only abstracting procedures whose parameters must be numbers.
+; often the same programming pattern will be used with a number of different procedures.
+; if we want to abstract those patterns, we need to build procedures that accept procedures as arguments and return procedures as values (lambda, i see you lurking).
+; these are called _higher-order procedures_... procedures that manipulate procedures.
+
+
+; 1.3.1 Procedures as Arguments ##
+
+
 
 
 
