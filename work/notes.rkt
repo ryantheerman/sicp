@@ -1242,23 +1242,98 @@ in addition to the primitive predicates >, <, and =, there are logical compositi
 
 ; 1.3.1 Procedures as Arguments ##
 
+; consider these three procedures...
 
+; the first computes the sum of the integers from a through b
+(define (sum-integers a b)
+  (if (> a b)
+      0
+      (+ a (sum-integers (+ a 1) b))))
 
+(sum-integers 1 5)
 
+; the second computes the sum of the cubes of the integers in the given range
+(define (sum-cubes a b)
+  (if (> a b)
+      0
+      (+ (cube a)
+         (sum-cubes (+ a 1) b))))
+(define (cube x)
+  (* x x x))
 
+(sum-cubes 1 3)
 
+; the third computes the sum of a sequence of terms in the series 1/1*3 + 1/5*7 + 1/9*11 + ...
+; which converges to pi/8 (very slowly)
 
+(define (pi-sum a b)
+  (if (> a b)
+      0
+      (+ (/ 1.0 (* a (+ a 2)))
+         (pi-sum (+ a 4) b))))
 
+(* 8 (pi-sum 1 3))
+(* 8 (pi-sum 1 100))
+(* 8 (pi-sum 1 10000))
+; cool
 
+; these three procedures share a common underlying pattern. mostly they are identical differing only in the name of the procedure, the function of 'a' used to compute the term to be added, and the function that provides the next value of 'a'. we could generate each of the procedures using a template:
 
+(define (<name> a b)
+  (if (> a b)
+      0
+      (+ (<term> a)
+         (<name> (<next> a) b))))
 
+; the fact that such a strong pattern exists indicates that there is a useful abstraction here to be discovered.
+; in fact, mathematicians already invented 'sigma notation' to denote the concept of _summation of a series_
+; it allows the mathematician to deal with the concept of summation itself, rather than only with particular sum (to formulate general results about sums that are independent of the particular series being summed).
 
+; we want whichever language we use to design programs to be powerful enough so that we can write a procedure that expresses the concept of summation itself rather than only procedures that compute particular sums.
+; we'll use the above template to do this, and insert into the placeholder slots some formal parameters...
 
+(define (sum term a next b)
+  (if (> a b)
+      0
+      (+ (term a)
+         (sum term (next a) next b))))
 
+; sum is the name of the procedure
+; the arguments are the upper and lower bounds of the range (a and b)
+; as well as the procedures _term_ and _next_
+; let's use the new sum procedure to define sum-cubes (we'll also use inc to increment a)
 
+(define (inc n) (+ n 1))
+(define (cube x) (* x x x))
+(define (sum-cubes a b)
+  (sum cube a inc b))
 
+(sum-cubes 1 2)
+(sum-cubes 1 3)
+(sum-cubes 1 10)
 
+; term is function take the sum of
+; next is how we advance to the next element
 
+; let's use the new sum procedure to define sum-integers as well
+; we'll need to define an identity function to track a at any given iteration
+
+(define (identity x) x)
+(define (sum-integers a b)
+  (sum identity a inc b))
+
+(sum-integers 1 10)
+
+; and let's define pi-sum in the same terms
+
+(define (pi-sum a b)
+  (define (pi-term x)
+    (/ 1.0 (* x (+ x 2))))
+  (define (pi-next x)
+    (+ x 4))
+  (sum pi-term a pi-next b))
+
+(* 8 (pi-sum 1 10000000))
 
 
 
