@@ -1335,7 +1335,7 @@ in addition to the primitive predicates >, <, and =, there are logical compositi
 
 (* 8 (pi-sum 1 10000000))
 
-
+; now that we've defined sum, we can use it as a building block in developing further concepts.
 
 
 
