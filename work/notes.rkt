@@ -1338,6 +1338,185 @@ in addition to the primitive predicates >, <, and =, there are logical compositi
 ; now that we've defined sum, we can use it as a building block in developing further concepts.
 
 
+; 1.3.2 Constructing Procedures Using **lambda** ##
+
+; we don't always want to have to define every procedure we want to use
+; especially if they are trivial, one-shot procedures that won't be useful anywhere except in the procedure we're currently working on.
+; we can instead use the special form **lambda**
+; lambda lets us specify a procedure without defining it.
+; so for example if we wanted a procedure for computing some input plus 4, with define we'd give it a name...
+
+(define (plus-4 x) (+ x 4))
+
+(plus-4 4)
+
+; but with lambda, we don't need to assign the procedure to a variable
+
+(lambda (x) (+ x 4))
+(lambda (x) (/ 1.0 (* x (+ x 2))))
+
+; these lambdas can replace pi-term and pi-next in the pi-sum procedure in the previous section, like so...
+
+(define (pi-sum a b)
+  (sum (lambda (x) (/ 1.0 (* x (+ x 2))))
+       a
+       (lambda (x) (+ x 4))
+       b))
+
+(* 8 (pi-sum 1 1000000))
+
+; **lambda** creates procedures in the same way as **define**, but there is no name specified for the procedure.
+; it's fire and forget. we cannot call it again without spelling it out again.
+; if you need to call a procedure multiple times, it's a good candidate for using define to assign that procedure to a referencable variable
+; but if it's a one time use, it's simpler to use lambda.
+
+(define (plus4 x) (+ x 4))
+; is equivalent to
+(define plus4-lambda (lambda (x) (+ x 4)))
+
+(plus4 4)
+(plus4-lambda 4)
+
+; lambda takes the form...
+; (lambda (<formal-parameters>) <body>)
+
+; and can be read like...
+; (lambda                     (x)     (+   x     4))
+;     |                        |       |   |     |
+; the procedure of an argument x that adds x and 4
+
+; like any expression that has a procedure as its value, a lambda expression can be used as the operator in a combination such as
+(define (square x) (* x x))
+((lambda (x y z) (+ x y (square z)))
+ 1 2 3)
+; or more generally, in any context where we would normally use a procedure name.
+
+; what would the above look like defined as a procedure?
+
+(define (sum-2-idents-and-a-square x y z)
+  (+ x y (square z)))
+
+(sum-2-idents-and-a-square 1 2 3)
+
+; Using **let** to create local variables
+; another use of lambda is creating local variables
+; oftentimes we need local variables in our procedures other than those that have been bound as formal parameters.
+
+; suppose for example that we want to compute the function...
+; f(x,y) = x(1 + xy)^2 + y(1 - y) + (1 + xy)(1 - y)
+
+; we could express this as...
+; a = 1 + xy
+; b = 1 - y
+; f(x,y) = xa^2 + yb + ab
+
+; in creating a procedure to compute f, we would like to include as local variables not only the formal parameters x and y, but also the names of intermediate quantities like a and b.
+; we could leverage an auxiliary procedure to bind the local variables if we want...
+
+(define (f x y)
+  (define (f-helper a b)
+    (+ (* x (square a))
+       (* y b)
+       (* a b)))
+  (f-helper (+ 1 (* x y))
+            (- 1 y)))
+
+(f 2 1)
+
+; or we could use a lambda to specify an anonymous procedure for binding our local vars. in that case the body of f simply becomes a call to that procedure...
+
+(define (f x y)
+  ((lambda (a b)
+     (+ (* x (square a))
+        (* y b)
+        (* a b)))
+   (+ 1 (* x y))
+   (- 1 y)))
+
+(f 2 1)
+
+; this construct is so useful that there is a special form called **let** to make its use more convenient. using let, the f procedure could be written as...
+
+(define (f x y)
+  (let ((a (+ 1 (* x y)))
+        (b (- 1 y)))
+    (+ (* x (square a))
+       (* y b)
+       (* a b))))
+
+(f 2 1)
+
+; the general form of a let expression is...
+
+; (let ((<var_1> <exp_1>)
+;       (<var_2> <exp_2>)
+;       ...
+;       (<var_n> <exp_n>))
+;   <body>)
+
+; which can be thought of as saying
+; let <var_1> have the value <exp_1> and
+;     <var_2> have the value <exp_2> and
+;     ...
+;     <var_n> have the value <exp_n>
+; in  <body>
+
+; the first part of the let expression is a list of name-expression pairs.
+; when let is evaluated, each name is associated with the value of the corresponding expression.
+; the body of the let is evaluated with these names bound as local variables.
+; the way this happens is the that the let expression is interpreted as an alternate syntax for
+
+; ((lambda (<var_1> ... <var_n>)
+;     <body>)
+;  <exp_1>
+;  ...
+;  <exp_n>)
+
+; the interpreter requires no new mechanism in order to provide local variables.
+; a let expression is simply syntactic sugar for the underlying lambda application.
+
+; from this equivalence we can see that the scope of a variable specified by let is the body of the let. this implies that:
+  ; let allows one to bind variables as locally as possible to where they are to be used.
+    ; for example, if the value of x is 5, the value of the expression...
+    (define x 5)
+    (+ (let ((x 3))
+         (+ x (* x 10)))
+       x)
+    ; is 38.
+    ; the x in the body of the let is 3, so the let expression evaluates to 33
+    ; but outside the scope of the let x is still 5, so 33 + 5 = 38
+
+  ; the variables' values are computed outside the let.
+    ; this matters when the expressions that provide the values for the local variables depend upon variables having the same names as the local variables themselves
+    ; for example, if the value of x is 2, the expression...
+    (define x 2)
+    (let ((x 3)
+          (y (+ x 2)))
+      (* x y))
+    ; evaluates to 12
+    ; inside the body of the let, x will be 3 as defined by let
+    ; but while assigning the value (+ x 2) to y in the let expression, x still has the outer value of 2.
+    ; it's only in the body of the let that the assignments to local variables kicks in
+    ; during those assignments, the outer values are used.
+
+; we could of course use internal definitions to get the same effect as let, like...
+
+(define (f x y)
+  (define a (+ 1 (* x y)))
+  (define b (- 1 y))
+  (+ (* x (square a))
+     (* y b)
+     (* a b)))
+
+(f 2 1)
+
+; but we prefer to use let in these situations and to use define internally only for internal procedures
+
+
+; 1.3.3 Procedures as General Methods ##
+
+; 
+
 
 
 
