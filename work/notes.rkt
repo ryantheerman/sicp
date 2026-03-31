@@ -1516,6 +1516,9 @@ in addition to the primitive predicates >, <, and =, there are logical compositi
 ; 1.3.3 Procedures as General Methods ##
 
 ; 
+(define a 1)
+(define b 2)
+(error "testing error" a b)
 
 
 
