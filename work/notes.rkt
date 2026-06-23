@@ -1520,7 +1520,9 @@ in addition to the primitive predicates >, <, and =, there are logical compositi
 (define b 2)
 (error "testing error" a b)
 
-; testing nvim git plugins
+; testing nvim git plugins what even
+
+testing 1 2 3
 
 
 
